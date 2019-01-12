@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("EventBinder.UnitTests")]
+[assembly: AssemblyTitle("EventBinder.Tests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("EventBinder.UnitTests")]
+[assembly: AssemblyProduct("EventBinder.Tests")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("3ff4c205-5f83-4b29-b7d9-f7fb4450f9bf")]
+[assembly: Guid("55b6a5ac-c44e-4417-be23-1d1d36261cc8")]
 
 // Version information for an assembly consists of the following four values:
 //

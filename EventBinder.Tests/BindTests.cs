@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -12,7 +14,7 @@ using Xunit;
 
 namespace EventBinder.Tests
 {
-    public class SyncTests
+    public class BindTests
     {
         [Fact]
         public void SyncProperty_Binding_Fails()
@@ -20,7 +22,7 @@ namespace EventBinder.Tests
             var obj = new DependencyObject();
 
             Assert.Throws<InvalidCastException>(() => BindingOperations
-                .SetBinding(obj, Sync.CommandProperty, new Binding {Source = Mock.Of<ICommand>()}));
+                .SetBinding(obj, Bind.CommandProperty, new Binding {Source = Mock.Of<ICommand>()}));
         }
 
         [Fact]
@@ -29,7 +31,7 @@ namespace EventBinder.Tests
             var obj = new UIElement();
 
             Assert.Throws<InvalidOperationException>(() => BindingOperations.SetBinding(obj,
-                Sync.CommandProperty, new EventBinding { Source = Mock.Of<ICommand>(), EventPath = "IncorrectEvent"}));
+                Bind.CommandProperty, new EventBinding { Source = Mock.Of<ICommand>(), EventPath = "IncorrectEvent"}));
         }
 
         [WpfTheory]
@@ -38,11 +40,11 @@ namespace EventBinder.Tests
         {
             var testValue = -1;
             var btn = new Button();
-            btn.SetValue(Sync.CommandParameterProperty, 5);
+            btn.SetValue(Bind.CommandParameterProperty, 5);
             var commandMock = new Mock<ICommand>();
             commandMock.Setup(c => c.Execute(5)).Callback(() => testValue = 7);
 
-            BindingOperations.SetBinding(btn, Sync.CommandProperty,
+            BindingOperations.SetBinding(btn, Bind.CommandProperty,
                 new EventBinding {Source = commandMock.Object, EventPath = eventName });
             btn.RaiseEvent(args(btn));
 
@@ -56,11 +58,11 @@ namespace EventBinder.Tests
         {
             var isEnabled = false;
             var btn = new Button();
-            btn.SetValue(Sync.CommandParameterProperty, 5);
+            btn.SetValue(Bind.CommandParameterProperty, 5);
             var commandMock = new Mock<ICommand>();
             commandMock.Setup(c => c.CanExecute(5)).Returns(() => isEnabled);
 
-            BindingOperations.SetBinding(btn, Sync.CommandProperty,
+            BindingOperations.SetBinding(btn, Bind.CommandProperty,
                 new EventBinding { Source = commandMock.Object, EventPath = eventName });
             btn.RaiseEvent(args(btn));
 
@@ -77,14 +79,14 @@ namespace EventBinder.Tests
         {
             var testValue = -1;
             var btn = new Button();
-            btn.SetValue(Sync.ActionParameterProperty, 5);
+            btn.SetValue(Bind.ActionParameterProperty, 5);
             Action<object> action = parameter =>
             {
                 Assert.Equal(5, parameter);
                 testValue = 7;
             };
 
-            BindingOperations.SetBinding(btn, Sync.PrmActionProperty,
+            BindingOperations.SetBinding(btn, Bind.PrmActionProperty,
                 new EventBinding { Source = action, EventPath = eventName });
             btn.RaiseEvent(args(btn));
 
@@ -97,14 +99,59 @@ namespace EventBinder.Tests
         {
             var testValue = -1;
             var btn = new Button();
-            btn.SetValue(Sync.ActionParameterProperty, 5);
+            btn.SetValue(Bind.ActionParameterProperty, 5);
             Action action = () => testValue = 7;
 
-            BindingOperations.SetBinding(btn, Sync.ActionProperty,
+            BindingOperations.SetBinding(btn, Bind.ActionProperty,
                 new EventBinding { Source = action, EventPath = eventName });
             btn.RaiseEvent(args(btn));
 
             Assert.Equal(7, testValue);
+        }
+
+        [WpfTheory]
+        [MemberData(nameof(ValidEventData))]
+        public void SyncProperty_AwaitablePrmActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        {
+            var testValue = -1;
+            const int expectedValue = 7;
+            var btn = new Button();
+            btn.SetValue(Bind.AwaitableActionParameterProperty, 5);
+            Func<object, Task> action = parameter =>
+            {
+                Assert.Equal(5, parameter);
+                return Task.Run(() => Thread.VolatileWrite(ref testValue, expectedValue));
+            };
+
+            BindingOperations.SetBinding(btn, Bind.AwaitablePrmActionProperty,
+                new EventBinding { Source = action, EventPath = eventName });
+            btn.RaiseEvent(args(btn));
+
+            for (int i = 0; i < 30 && Thread.VolatileRead(ref testValue) != expectedValue; i++)
+            {
+                Thread.Sleep(50);
+            }
+            Assert.Equal(expectedValue, Thread.VolatileRead(ref testValue));
+        }
+
+        [WpfTheory]
+        [MemberData(nameof(ValidEventData))]
+        public void SyncProperty_AwaitableActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        {
+            var testValue = -1;
+            const int expectedValue = 7;
+            var btn = new Button();
+            Func<Task> action = () => Task.Run(() => Thread.VolatileWrite(ref testValue, expectedValue));
+
+            BindingOperations.SetBinding(btn, Bind.AwaitableActionProperty,
+                new EventBinding { Source = action, EventPath = eventName });
+            btn.RaiseEvent(args(btn));
+
+            for (int i = 0; i < 30 && Thread.VolatileRead(ref testValue) != expectedValue; i++)
+            {
+                Thread.Sleep(50);
+            }
+            Assert.Equal(expectedValue, Thread.VolatileRead(ref testValue));
         }
 
         public static IEnumerable<object[]> ValidEventData()

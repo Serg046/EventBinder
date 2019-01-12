@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using LinqExpr = System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Data;
@@ -7,15 +8,15 @@ using System.Windows.Input;
 
 namespace EventBinder
 {
-    public static class Sync
+    public static class Bind
     {
         public static readonly DependencyProperty CommandProperty = DependencyProperty.RegisterAttached("Command",
-            typeof(ICommand), typeof(Sync), new PropertyMetadata(CommandPropertyChangedCallback));
+            typeof(ICommand), typeof(Bind), new PropertyMetadata(CommandPropertyChangedCallback));
         public static ICommand GetCommand(DependencyObject element) => (ICommand)element.GetValue(CommandProperty);
         public static void SetCommand(DependencyObject element, ICommand value) => element.SetValue(CommandProperty, value);
 
         public static readonly DependencyProperty CommandParameterProperty = DependencyProperty.RegisterAttached("CommandParameter",
-            typeof(object), typeof(Sync));
+            typeof(object), typeof(Bind));
         public static object GetCommandParameter(DependencyObject element) => element.GetValue(CommandParameterProperty);
         public static void SetCommandParameter(DependencyObject element, object value) => element.SetValue(CommandParameterProperty, value);
 
@@ -35,12 +36,12 @@ namespace EventBinder
         //-------------------------------------------------------------------------------------------------------------------
 
         public static readonly DependencyProperty PrmActionProperty = DependencyProperty.RegisterAttached("PrmAction",
-            typeof(Action<object>), typeof(Sync), new PropertyMetadata(PrmActionPropertyChangedCallback));
+            typeof(Action<object>), typeof(Bind), new PropertyMetadata(PrmActionPropertyChangedCallback));
         public static Action<object> GetPrmAction(DependencyObject element) => (Action<object>)element.GetValue(PrmActionProperty);
         public static void SetPrmAction(DependencyObject element, Action<object> value) => element.SetValue(PrmActionProperty, value);
 
         public static readonly DependencyProperty ActionParameterProperty = DependencyProperty.RegisterAttached("ActionParameter",
-            typeof(object), typeof(Sync));
+            typeof(object), typeof(Bind));
         public static object GetActionParameter(DependencyObject element) => element.GetValue(ActionParameterProperty);
         public static void SetActionParameter(DependencyObject element, object value) => element.SetValue(ActionParameterProperty, value);
 
@@ -53,13 +54,46 @@ namespace EventBinder
         //-------------------------------------------------------------------------------------------------------------------
 
         public static readonly DependencyProperty ActionProperty = DependencyProperty.RegisterAttached("Action",
-            typeof(Action), typeof(Sync), new PropertyMetadata(ActionPropertyChangedCallback));
+            typeof(Action), typeof(Bind), new PropertyMetadata(ActionPropertyChangedCallback));
         public static Action GetAction(DependencyObject element) => (Action)element.GetValue(ActionProperty);
         public static void SetAction(DependencyObject element, Action value) => element.SetValue(ActionProperty, value);
 
         private static void ActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
         {
             var action = (Action)args.NewValue;
+            Subscribe(parent, args, () => action());
+        }
+
+        //-------------------------------------------------------------------------------------------------------------------
+
+        public static readonly DependencyProperty AwaitablePrmActionProperty = DependencyProperty.RegisterAttached("AwaitablePrmAction",
+            typeof(Func<object, Task>), typeof(Bind), new PropertyMetadata(AwaitablePrmActionPropertyChangedCallback));
+        public static Func<object, Task> GetAwaitablePrmAction(DependencyObject element) => (Func<object, Task>)element.GetValue(AwaitablePrmActionProperty);
+        public static void SetAwaitablePrmAction(DependencyObject element, Func<object, Task> value) => element.SetValue(AwaitablePrmActionProperty, value);
+
+        public static readonly DependencyProperty AwaitableActionParameterProperty = DependencyProperty.RegisterAttached("AwaitableActionParameter",
+            typeof(object), typeof(Bind));
+        public static object GetAwaitableActionParameter(DependencyObject element) => element.GetValue(AwaitableActionParameterProperty);
+        public static void SetAwaitableActionParameter(DependencyObject element, object value) => element.SetValue(AwaitableActionParameterProperty, value);
+
+        private static void AwaitablePrmActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
+        {
+            var awaitableAction = (Func<object, Task>)args.NewValue;
+            Action action = async () => await awaitableAction.Invoke(parent.GetValue(AwaitableActionParameterProperty));
+            Subscribe(parent, args, () => action());
+        }
+
+        //-------------------------------------------------------------------------------------------------------------------
+
+        public static readonly DependencyProperty AwaitableActionProperty = DependencyProperty.RegisterAttached("AwaitableAction",
+            typeof(Func<Task>), typeof(Bind), new PropertyMetadata(AwaitableActionPropertyChangedCallback));
+        public static Func<Task> GetAwaitableAction(DependencyObject element) => (Func<Task>)element.GetValue(AwaitableActionProperty);
+        public static void SetAwaitableAction(DependencyObject element, Func<Task> value) => element.SetValue(AwaitableActionProperty, value);
+
+        private static void AwaitableActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
+        {
+            var awaitableAction = (Func<Task>)args.NewValue;
+            Action action = async () => await awaitableAction.Invoke();
             Subscribe(parent, args, () => action());
         }
 
