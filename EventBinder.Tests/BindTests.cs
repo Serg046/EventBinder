@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using Moq;
@@ -14,10 +10,10 @@ using Xunit;
 
 namespace EventBinder.Tests
 {
-    public class BindTests
+    public class BindTests : EventTests
     {
         [Fact]
-        public void SyncProperty_Binding_Fails()
+        public void CommandProperty_Binding_Fails()
         {
             var obj = new DependencyObject();
 
@@ -26,7 +22,7 @@ namespace EventBinder.Tests
         }
 
         [Fact]
-        public void SyncProperty_NoEvent_Fails()
+        public void CommandProperty_NoEvent_Fails()
         {
             var obj = new UIElement();
 
@@ -36,7 +32,7 @@ namespace EventBinder.Tests
 
         [WpfTheory]
         [MemberData(nameof(ValidEventData))]
-        public void SyncProperty_CommandBinding_CommandExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        public void CommandProperty_CommandBinding_CommandExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
         {
             var testValue = -1;
             var btn = new Button();
@@ -54,7 +50,7 @@ namespace EventBinder.Tests
 
         [WpfTheory]
         [MemberData(nameof(ValidEventData))]
-        public void SyncProperty_CommandBinding_EnabledStateUpdated(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        public void CommandProperty_CommandBinding_EnabledStateUpdated(string eventName, Func<DependencyObject, RoutedEventArgs> args)
         {
             var isEnabled = false;
             var btn = new Button();
@@ -75,7 +71,7 @@ namespace EventBinder.Tests
 
         [WpfTheory]
         [MemberData(nameof(ValidEventData))]
-        public void SyncProperty_PrmActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        public void PrmActionProperty_PrmActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
         {
             var testValue = -1;
             var btn = new Button();
@@ -95,11 +91,10 @@ namespace EventBinder.Tests
 
         [WpfTheory]
         [MemberData(nameof(ValidEventData))]
-        public void SyncProperty_ActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        public void ActionProperty_ActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
         {
             var testValue = -1;
             var btn = new Button();
-            btn.SetValue(Bind.ActionParameterProperty, 5);
             Action action = () => testValue = 7;
 
             BindingOperations.SetBinding(btn, Bind.ActionProperty,
@@ -111,7 +106,7 @@ namespace EventBinder.Tests
 
         [WpfTheory]
         [MemberData(nameof(ValidEventData))]
-        public void SyncProperty_AwaitablePrmActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        public void AwaitablePrmActionProperty_AwaitablePrmActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
         {
             var testValue = -1;
             const int expectedValue = 7;
@@ -136,7 +131,7 @@ namespace EventBinder.Tests
 
         [WpfTheory]
         [MemberData(nameof(ValidEventData))]
-        public void SyncProperty_AwaitableActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        public void AwaitableActionProperty_AwaitableActionBinding_ActionExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
         {
             var testValue = -1;
             const int expectedValue = 7;
@@ -152,32 +147,6 @@ namespace EventBinder.Tests
                 Thread.Sleep(50);
             }
             Assert.Equal(expectedValue, Thread.VolatileRead(ref testValue));
-        }
-
-        public static IEnumerable<object[]> ValidEventData()
-        {
-            Func<DependencyObject, RoutedEventArgs> eventArgs = source => new RoutedEventArgs(ButtonBase.ClickEvent, source);
-            yield return new object[] { "Click", eventArgs };
-
-            eventArgs = source => new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Right)
-            {
-                RoutedEvent = UIElement.MouseRightButtonDownEvent,
-                Source = source
-            };
-            yield return new object[] { "MouseRightButtonDown", eventArgs };
-
-            eventArgs = source => (ContextMenuEventArgs)Activator.CreateInstance(typeof(ContextMenuEventArgs),
-                BindingFlags.CreateInstance | BindingFlags.NonPublic | BindingFlags.Instance,
-                null, new object[] { source, true }, CultureInfo.CurrentCulture);
-            yield return new object[] { "ContextMenuOpening", eventArgs };
-
-            eventArgs = source => new KeyEventArgs(Keyboard.PrimaryDevice,
-                Mock.Of<PresentationSource>(), 0, Key.Enter)
-            {
-                RoutedEvent = UIElement.KeyUpEvent,
-                Source = source
-            };
-            yield return new object[] { "KeyUp", eventArgs };
         }
     }
 }

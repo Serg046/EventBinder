@@ -103,15 +103,19 @@ namespace EventBinder
         {
             var binding = (EventBinding)BindingOperations.GetBinding(parent, args.Property)
                           ?? throw new InvalidOperationException("Cannot get binding");
-            var eventInfo = parent.GetType().GetEvent(binding.EventPath)
-                            ?? throw new InvalidOperationException($"Cannot find the event '{binding.EventPath}'");
-            var parameters = eventInfo.EventHandlerType.GetMethods().Single(m => m.Name == "Invoke").GetParameters();
 
-            var methodExpression = LinqExpr.Expression.Lambda(eventInfo.EventHandlerType, callExpression.Body,
-                parameters.Select(p => LinqExpr.Expression.Parameter(p.ParameterType)));
-            var method = methodExpression.Compile();
+            foreach (var eventPath in binding.EventPath.Split(','))
+            {
+                var eventInfo = parent.GetType().GetEvent(eventPath)
+                                ?? throw new InvalidOperationException($"Cannot find the event '{eventPath}'");
+                var parameters = eventInfo.EventHandlerType.GetMethods().Single(m => m.Name == "Invoke").GetParameters();
 
-            eventInfo.AddEventHandler(parent, method);
+                var methodExpression = LinqExpr.Expression.Lambda(eventInfo.EventHandlerType, callExpression.Body,
+                    parameters.Select(p => LinqExpr.Expression.Parameter(p.ParameterType)));
+                var method = methodExpression.Compile();
+
+                eventInfo.AddEventHandler(parent, method);
+            }
         }
     }
 }
