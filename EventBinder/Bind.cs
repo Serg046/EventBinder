@@ -79,7 +79,7 @@ namespace EventBinder
         private static void AwaitablePrmActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
         {
             var awaitableAction = (Func<object, Task>)args.NewValue;
-            Action action = async () => await awaitableAction.Invoke(parent.GetValue(AwaitableActionParameterProperty));
+            Action action = () => awaitableAction.Invoke(parent.GetValue(AwaitableActionParameterProperty));
             Subscribe(parent, args, () => action());
         }
 
@@ -93,7 +93,7 @@ namespace EventBinder
         private static void AwaitableActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
         {
             var awaitableAction = (Func<Task>)args.NewValue;
-            Action action = async () => await awaitableAction.Invoke();
+            Action action = () => awaitableAction.Invoke();
             Subscribe(parent, args, () => action());
         }
 
