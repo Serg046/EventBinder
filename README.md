@@ -2,6 +2,10 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/2k5lfrim0dxbekuy?svg=true)](https://ci.appveyor.com/project/Serg046/eventbinder) [![NuGet version](https://badge.fury.io/nu/EventBinder.svg)](https://www.nuget.org/packages/EventBinder)
 
+## Getting started
+
+Just install the nuget package. If it does not work and you get XamlParseException, then apply `[assembly: EventBinder.AssemblyReference]` attribute in your AssemblyInfo.cs.
+
 ## ICommand binding
 
 Do you want to bind your command to any event without ugly EventTrigger, custom UI controls, huge mvvm frameworks, etc?

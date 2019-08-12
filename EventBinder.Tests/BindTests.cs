@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -30,7 +32,7 @@ namespace EventBinder.Tests
                 Bind.CommandProperty, new EventBinding { Source = Mock.Of<ICommand>(), EventPath = "IncorrectEvent"}));
         }
 
-        [WpfTheory]
+        [StaTheory]
         [MemberData(nameof(ValidEventData))]
         public void CommandProperty_CommandBinding_CommandExecuted(string eventName, Func<DependencyObject, RoutedEventArgs> args)
         {
@@ -147,6 +149,25 @@ namespace EventBinder.Tests
                 Thread.Sleep(50);
             }
             Assert.Equal(expectedValue, Thread.VolatileRead(ref testValue));
+        }
+
+        [Theory]
+        [MemberData(nameof(TestData))]
+        public void SomeTest(IEnumerable<int> array)
+        {
+            var task = Task.Delay(50000);
+            var x = task.Wait(2000);
+            Assert.Single(array);
+        }
+
+        public static IEnumerable<object[]> TestData()
+        {
+            yield return new object[] { new MyList(1) };
+        }
+
+        private class MyList : List<int>
+        {
+            public MyList(int value) : base(new int[] { value }) { }
         }
     }
 }
