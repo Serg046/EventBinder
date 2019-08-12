@@ -42,9 +42,6 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
-    <Reference Include="Xunit.StaFact">
-      <HintPath>..\..\Xunit.StaFact\bin\Xunit.StaFact\Debug\net452\Xunit.StaFact.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EventTests.cs" />
@@ -67,6 +64,9 @@
     </PackageReference>
     <PackageReference Include="xunit.runner.visualstudio">
       <Version>2.4.1</Version>
+    </PackageReference>
+    <PackageReference Include="Xunit.StaFact">
+      <Version>0.3.18</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
