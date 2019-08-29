@@ -1,120 +1,121 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 using LinqExpr = System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Data;
-using System.Windows.Input;
 
 namespace EventBinder
 {
     public static class Bind
     {
-        public static readonly DependencyProperty CommandProperty = DependencyProperty.RegisterAttached("Command",
-            typeof(ICommand), typeof(Bind), new PropertyMetadata(CommandPropertyChangedCallback));
-        public static ICommand GetCommand(DependencyObject element) => (ICommand)element.GetValue(CommandProperty);
-        public static void SetCommand(DependencyObject element, ICommand value) => element.SetValue(CommandProperty, value);
+        private static readonly DependencyPropertyCollection _properties = new DependencyPropertyCollection("Argument");
 
-        public static readonly DependencyProperty CommandParameterProperty = DependencyProperty.RegisterAttached("CommandParameter",
-            typeof(object), typeof(Bind));
-        public static object GetCommandParameter(DependencyObject element) => element.GetValue(CommandParameterProperty);
-        public static void SetCommandParameter(DependencyObject element, object value) => element.SetValue(CommandParameterProperty, value);
-
-        private static void CommandPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
+        private static void Subscribe(DependencyObject parent, EventBinding binding, Action<object, EventArgs> callback)
         {
-            var command = (ICommand)args.NewValue;
-            Subscribe(parent, args, () => command.Execute(parent.GetValue(CommandParameterProperty)));
-
-            if (parent is UIElement uiElement)
-            {
-                UpdateState();
-                command.CanExecuteChanged += (sender, eventArgs) => UpdateState();
-                void UpdateState() => uiElement.IsEnabled = command.CanExecute(parent.GetValue(CommandParameterProperty));
-            }
-        }
-
-        //-------------------------------------------------------------------------------------------------------------------
-
-        public static readonly DependencyProperty PrmActionProperty = DependencyProperty.RegisterAttached("PrmAction",
-            typeof(Action<object>), typeof(Bind), new PropertyMetadata(PrmActionPropertyChangedCallback));
-        public static Action<object> GetPrmAction(DependencyObject element) => (Action<object>)element.GetValue(PrmActionProperty);
-        public static void SetPrmAction(DependencyObject element, Action<object> value) => element.SetValue(PrmActionProperty, value);
-
-        public static readonly DependencyProperty ActionParameterProperty = DependencyProperty.RegisterAttached("ActionParameter",
-            typeof(object), typeof(Bind));
-        public static object GetActionParameter(DependencyObject element) => element.GetValue(ActionParameterProperty);
-        public static void SetActionParameter(DependencyObject element, object value) => element.SetValue(ActionParameterProperty, value);
-
-        private static void PrmActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
-        {
-            var action = (Action<object>)args.NewValue;
-            Subscribe(parent, args, () => action.Invoke(parent.GetValue(ActionParameterProperty)));
-        }
-
-        //-------------------------------------------------------------------------------------------------------------------
-
-        public static readonly DependencyProperty ActionProperty = DependencyProperty.RegisterAttached("Action",
-            typeof(Action), typeof(Bind), new PropertyMetadata(ActionPropertyChangedCallback));
-        public static Action GetAction(DependencyObject element) => (Action)element.GetValue(ActionProperty);
-        public static void SetAction(DependencyObject element, Action value) => element.SetValue(ActionProperty, value);
-
-        private static void ActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
-        {
-            var action = (Action)args.NewValue;
-            Subscribe(parent, args, () => action());
-        }
-
-        //-------------------------------------------------------------------------------------------------------------------
-
-        public static readonly DependencyProperty AwaitablePrmActionProperty = DependencyProperty.RegisterAttached("AwaitablePrmAction",
-            typeof(Func<object, Task>), typeof(Bind), new PropertyMetadata(AwaitablePrmActionPropertyChangedCallback));
-        public static Func<object, Task> GetAwaitablePrmAction(DependencyObject element) => (Func<object, Task>)element.GetValue(AwaitablePrmActionProperty);
-        public static void SetAwaitablePrmAction(DependencyObject element, Func<object, Task> value) => element.SetValue(AwaitablePrmActionProperty, value);
-
-        public static readonly DependencyProperty AwaitableActionParameterProperty = DependencyProperty.RegisterAttached("AwaitableActionParameter",
-            typeof(object), typeof(Bind));
-        public static object GetAwaitableActionParameter(DependencyObject element) => element.GetValue(AwaitableActionParameterProperty);
-        public static void SetAwaitableActionParameter(DependencyObject element, object value) => element.SetValue(AwaitableActionParameterProperty, value);
-
-        private static void AwaitablePrmActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
-        {
-            var awaitableAction = (Func<object, Task>)args.NewValue;
-            Action action = () => awaitableAction.Invoke(parent.GetValue(AwaitableActionParameterProperty));
-            Subscribe(parent, args, () => action());
-        }
-
-        //-------------------------------------------------------------------------------------------------------------------
-
-        public static readonly DependencyProperty AwaitableActionProperty = DependencyProperty.RegisterAttached("AwaitableAction",
-            typeof(Func<Task>), typeof(Bind), new PropertyMetadata(AwaitableActionPropertyChangedCallback));
-        public static Func<Task> GetAwaitableAction(DependencyObject element) => (Func<Task>)element.GetValue(AwaitableActionProperty);
-        public static void SetAwaitableAction(DependencyObject element, Func<Task> value) => element.SetValue(AwaitableActionProperty, value);
-
-        private static void AwaitableActionPropertyChangedCallback(DependencyObject parent, DependencyPropertyChangedEventArgs args)
-        {
-            var awaitableAction = (Func<Task>)args.NewValue;
-            Action action = () => awaitableAction.Invoke();
-            Subscribe(parent, args, () => action());
-        }
-
-        //-------------------------------------------------------------------------------------------------------------------
-
-        private static void Subscribe(DependencyObject parent, DependencyPropertyChangedEventArgs args, LinqExpr.Expression<Action> callExpression)
-        {
-            var binding = (EventBinding)BindingOperations.GetBinding(parent, args.Property)
-                          ?? throw new InvalidOperationException("Cannot get binding");
-
             foreach (var eventPath in binding.EventPath.Split(','))
             {
                 var eventInfo = parent.GetType().GetEvent(eventPath)
                                 ?? throw new InvalidOperationException($"Cannot find the event '{eventPath}'");
                 var parameters = eventInfo.EventHandlerType.GetMethods().Single(m => m.Name == "Invoke").GetParameters();
+                var parameterExpressions = parameters.Select(
+                    p => LinqExpr.Expression.Parameter(p.ParameterType)).ToArray();
 
-                var methodExpression = LinqExpr.Expression.Lambda(eventInfo.EventHandlerType, callExpression.Body,
-                    parameters.Select(p => LinqExpr.Expression.Parameter(p.ParameterType)));
+                var expr = LinqExpr.Expression.Call(LinqExpr.Expression.Constant(callback.Target),
+                    callback.Method, parameterExpressions);
+
+                var methodExpression = LinqExpr.Expression.Lambda(eventInfo.EventHandlerType, expr,
+                    parameterExpressions);
                 var method = methodExpression.Compile();
-
+                
                 eventInfo.AddEventHandler(parent, method);
+            }
+        }
+
+        public static readonly DependencyProperty MethodProperty = DependencyProperty.RegisterAttached("Method",
+            typeof(object), typeof(Bind), new PropertyMetadata(MethodPropertyChangedCallback));
+        public static object GetMethod(DependencyObject element) => element.GetValue(MethodProperty);
+        public static void SetMethod(DependencyObject element, object value) => element.SetValue(MethodProperty, value);
+
+        public static readonly DependencyProperty MethodProperty2 = DependencyProperty.RegisterAttached("Method2",
+            typeof(object), typeof(Bind), new PropertyMetadata(MethodPropertyChangedCallback));
+        public static object GetMethod2(DependencyObject element) => element.GetValue(MethodProperty2);
+        public static void SetMethod2(DependencyObject element, object value) => element.SetValue(MethodProperty2, value);
+
+        private static void MethodPropertyChangedCallback(DependencyObject source, DependencyPropertyChangedEventArgs args)
+        {
+            var eventBinding = (EventBinding)BindingOperations.GetBinding(source, args.Property)
+                               ?? throw new InvalidOperationException("Cannot get binding");
+            Subscribe(source, eventBinding, (sender, eventArgs) => CallBindedMethod(source, eventBinding, args, sender, eventArgs));
+        }
+
+        private static void CallBindedMethod(DependencyObject source, EventBinding eventBinding, DependencyPropertyChangedEventArgs args,
+            object sender, EventArgs eventArgs)
+        {
+            var arguments = new object[eventBinding.Arguments.Length];
+            for (var i = 0; i < eventBinding.Arguments.Length; i++)
+            {
+                var argument = eventBinding.Arguments[i];
+                switch (argument)
+                {
+                    case EventSender eventSender:
+                    {
+                        arguments[i] = sender;
+                        break;
+                    }
+                    case EventArguments eventArguments:
+                    {
+                        arguments[i] = eventArgs;
+                        break;
+                    }
+                    case Binding binding:
+                    {
+                        var property = _properties[i];
+                        BindingOperations.SetBinding(source, property, binding);
+                        arguments[i] = source.GetValue(property);
+                        BindingOperations.ClearBinding(source, property);
+                        break;
+                    }
+                    default: arguments[i] = argument; break;
+                }
+            }
+
+            var type = args.NewValue.GetType();
+            try
+            {
+                type.InvokeMember(eventBinding.MethodPath, BindingFlags.InvokeMethod, null, args.NewValue, arguments);
+            }
+            catch (MissingMethodException ex)
+            {
+                arguments[0] = null;
+                throw new MissingMethodException(
+                    $"Cannot find {eventBinding.MethodPath}({string.Join(",", arguments.Select(a => a?.GetType().Name ?? "null"))})", ex);
+            }
+        }
+
+        private class DependencyPropertyCollection
+        {
+            private readonly List<DependencyProperty> _depProperties = new List<DependencyProperty>();
+            private readonly string _propertyName;
+            public DependencyPropertyCollection(string propertyName) => _propertyName = propertyName;
+
+            public DependencyProperty this[int index]
+            {
+                get
+                {
+                    var idx = index + 1;
+                    if (_depProperties.Count < idx)
+                    {
+                        for (var i = _depProperties.Count; i < idx; i++)
+                        {
+                            var property = DependencyProperty.RegisterAttached(_propertyName + i,
+                                typeof(object), typeof(Bind), new PropertyMetadata());
+                            _depProperties.Add(property);
+                        }
+                    }
+                    return _depProperties[index];
+                }
             }
         }
     }
