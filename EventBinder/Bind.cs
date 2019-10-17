@@ -12,27 +12,6 @@ namespace EventBinder
     {
         private static readonly DependencyPropertyCollection _properties = new DependencyPropertyCollection("Argument");
 
-        private static void Subscribe(DependencyObject parent, EventBinding binding, Action<object, EventArgs> callback)
-        {
-            foreach (var eventPath in binding.EventPath.Split(','))
-            {
-                var eventInfo = parent.GetType().GetEvent(eventPath)
-                                ?? throw new InvalidOperationException($"Cannot find the event '{eventPath}'");
-                var parameters = eventInfo.EventHandlerType.GetMethods().Single(m => m.Name == "Invoke").GetParameters();
-                var parameterExpressions = parameters.Select(
-                    p => LinqExpr.Expression.Parameter(p.ParameterType)).ToArray();
-
-                var expr = LinqExpr.Expression.Call(LinqExpr.Expression.Constant(callback.Target),
-                    callback.Method, parameterExpressions);
-
-                var methodExpression = LinqExpr.Expression.Lambda(eventInfo.EventHandlerType, expr,
-                    parameterExpressions);
-                var method = methodExpression.Compile();
-                
-                eventInfo.AddEventHandler(parent, method);
-            }
-        }
-
         public static readonly DependencyProperty MethodProperty = DependencyProperty.RegisterAttached("Method",
             typeof(object), typeof(Bind), new PropertyMetadata(MethodPropertyChangedCallback));
         public static object GetMethod(DependencyObject element) => element.GetValue(MethodProperty);
@@ -50,8 +29,44 @@ namespace EventBinder
             Subscribe(source, eventBinding, (sender, eventArgs) => CallBindedMethod(source, eventBinding, args, sender, eventArgs));
         }
 
+        private static void Subscribe(DependencyObject parent, EventBinding binding, Action<object, EventArgs> callback)
+        {
+            foreach (var eventPath in binding.EventPath.Split(','))
+            {
+                var eventInfo = parent.GetType().GetEvent(eventPath)
+                                ?? throw new InvalidOperationException($"Cannot find the event '{eventPath}'");
+                var parameters = eventInfo.EventHandlerType.GetMethods().Single(m => m.Name == "Invoke").GetParameters();
+                var parameterExpressions = parameters.Select(
+                    p => LinqExpr.Expression.Parameter(p.ParameterType)).ToArray();
+
+                var expr = LinqExpr.Expression.Call(LinqExpr.Expression.Constant(callback.Target),
+                    callback.Method, parameterExpressions);
+
+                var methodExpression = LinqExpr.Expression.Lambda(eventInfo.EventHandlerType, expr,
+                    parameterExpressions);
+                var method = methodExpression.Compile();
+
+                eventInfo.AddEventHandler(parent, method);
+            }
+        }
+
         private static void CallBindedMethod(DependencyObject source, EventBinding eventBinding, DependencyPropertyChangedEventArgs args,
             object sender, EventArgs eventArgs)
+        {
+            var arguments = ResolveArguments(source, eventBinding, sender, eventArgs);
+            var type = args.NewValue.GetType();
+            try
+            {
+                type.InvokeMember(eventBinding.MethodPath, BindingFlags.InvokeMethod, null, args.NewValue, arguments);
+            }
+            catch (MissingMethodException ex)
+            {
+                throw new MissingMethodException(
+                    $"Cannot find {eventBinding.MethodPath}({string.Join(",", arguments.Select(a => a?.GetType().Name ?? "null"))})", ex);
+            }
+        }
+
+        private static object[] ResolveArguments(DependencyObject source, EventBinding eventBinding, object sender, EventArgs eventArgs)
         {
             var arguments = new object[eventBinding.Arguments.Length];
             for (var i = 0; i < eventBinding.Arguments.Length; i++)
@@ -60,38 +75,27 @@ namespace EventBinder
                 switch (argument)
                 {
                     case EventSender eventSender:
-                    {
-                        arguments[i] = sender;
-                        break;
-                    }
+                        {
+                            arguments[i] = sender;
+                            break;
+                        }
                     case EventArguments eventArguments:
-                    {
-                        arguments[i] = eventArgs;
-                        break;
-                    }
+                        {
+                            arguments[i] = eventArgs;
+                            break;
+                        }
                     case Binding binding:
-                    {
-                        var property = _properties[i];
-                        BindingOperations.SetBinding(source, property, binding);
-                        arguments[i] = source.GetValue(property);
-                        BindingOperations.ClearBinding(source, property);
-                        break;
-                    }
+                        {
+                            var property = _properties[i];
+                            BindingOperations.SetBinding(source, property, binding);
+                            arguments[i] = source.GetValue(property);
+                            BindingOperations.ClearBinding(source, property);
+                            break;
+                        }
                     default: arguments[i] = argument; break;
                 }
             }
-
-            var type = args.NewValue.GetType();
-            try
-            {
-                type.InvokeMember(eventBinding.MethodPath, BindingFlags.InvokeMethod, null, args.NewValue, arguments);
-            }
-            catch (MissingMethodException ex)
-            {
-                arguments[0] = null;
-                throw new MissingMethodException(
-                    $"Cannot find {eventBinding.MethodPath}({string.Join(",", arguments.Select(a => a?.GetType().Name ?? "null"))})", ex);
-            }
+            return arguments;
         }
 
         private class DependencyPropertyCollection

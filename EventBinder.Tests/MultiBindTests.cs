@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Input;
-using Moq;
 using Xunit;
 
 namespace EventBinder.Tests
@@ -12,93 +10,69 @@ namespace EventBinder.Tests
     public class MultiBindTests : EventTests
     {
         [WpfFact]
-        public void CommandProperty_CommandBinding_CommandExecuted()
-        {
-            var counter = 0;
-            var btn = new Button();
-            btn.SetValue(Bind.CommandParameterProperty, 5);
-            var commandMock = new Mock<ICommand>();
-            commandMock.Setup(c => c.Execute(5)).Callback(() => counter++);
-
-            BindingOperations.SetBinding(btn, Bind.CommandProperty,
-                new EventBinding { Source = commandMock.Object, EventPath = JoinedEventPath });
-            RaiseEvents(btn);
-
-            Assert.Equal(ValidEventData.Count, counter);
-            commandMock.VerifyAll();
-        }
-
-        [WpfFact]
-        public void PrmActionProperty_PrmActionBinding_ActionExecuted()
-        {
-            var counter = 0;
-            var btn = new Button();
-            btn.SetValue(Bind.ActionParameterProperty, 5);
-            Action<object> action = parameter =>
-            {
-                Assert.Equal(5, parameter);
-                counter++;
-            };
-
-            BindingOperations.SetBinding(btn, Bind.PrmActionProperty,
-                new EventBinding { Source = action, EventPath = JoinedEventPath });
-            RaiseEvents(btn);
-
-            Assert.Equal(ValidEventData.Count, counter);
-        }
-
-        [WpfFact]
-        public void ActionProperty_ActionBinding_ActionExecuted()
+        public void MethodProperty_NoParameters_Success()
         {
             var counter = 0;
             var btn = new Button();
             Action action = () => counter++;
 
-            BindingOperations.SetBinding(btn, Bind.ActionProperty,
-                new EventBinding { Source = action, EventPath = JoinedEventPath });
+            BindingOperations.SetBinding(btn, Bind.MethodProperty,
+                new EventBinding(JoinedEventPath, "Invoke") { Source = action });
             RaiseEvents(btn);
 
             Assert.Equal(ValidEventData.Count, counter);
         }
 
         [WpfFact]
-        public void AwaitablePrmActionProperty_AwaitablePrmActionBinding_ActionExecuted()
+        public void MethodProperty_FuncWithNoParameters_Success()
         {
             var counter = 0;
             var btn = new Button();
-            btn.SetValue(Bind.AwaitableActionParameterProperty, 5);
-            Func<object, Task> action = parameter =>
+            Func<int> func = () => { counter++; return -1; };
+
+            BindingOperations.SetBinding(btn, Bind.MethodProperty,
+                new EventBinding(JoinedEventPath, "Invoke") { Source = func });
+            RaiseEvents(btn);
+
+            Assert.Equal(ValidEventData.Count, counter);
+        }
+
+        [WpfFact]
+        public void MethodProperty_UserParameters_Success()
+        {
+            var numCounter = 0;
+            var strCounter = string.Empty;
+            var btn = new Button();
+            Action<int, string> action = (num, str) =>
             {
-                Assert.Equal(5, parameter);
-                return Task.Run(() => Interlocked.Increment(ref counter));
+                numCounter += num;
+                strCounter += str;
             };
 
-            BindingOperations.SetBinding(btn, Bind.AwaitablePrmActionProperty,
-                new EventBinding { Source = action, EventPath = JoinedEventPath });
+            BindingOperations.SetBinding(btn, Bind.MethodProperty,
+                new EventBinding(JoinedEventPath, "Invoke", 1, "1") { Source = action });
             RaiseEvents(btn);
 
-            for (int i = 0; i < 30 && Thread.VolatileRead(ref counter) != ValidEventData.Count; i++)
-            {
-                Thread.Sleep(50);
-            }
-            Assert.Equal(ValidEventData.Count, counter);
+            Assert.Equal(ValidEventData.Count, numCounter);
+            Assert.Equal(ValidEventData.Count, strCounter.Length);
         }
 
         [WpfFact]
-        public void AwaitableActionProperty_AwaitableActionBinding_ActionExecuted()
+        public void MethodProperty_EventParameters_Success()
         {
             var counter = 0;
             var btn = new Button();
-            Func<Task> action = () => Task.Run(() => Interlocked.Increment(ref counter));
+            Action<object, EventArgs> action = (sender, eventArgs) =>
+            {
+                Assert.Equal(btn, sender);
+                Assert.Contains(ValidEventData.Select(d => (dynamic)d[1]), t => t(btn).GetType() == eventArgs.GetType());
+                counter++;
+            };
 
-            BindingOperations.SetBinding(btn, Bind.AwaitableActionProperty,
-                new EventBinding { Source = action, EventPath = JoinedEventPath });
+            BindingOperations.SetBinding(btn, Bind.MethodProperty, new EventBinding(
+                JoinedEventPath, "Invoke", new EventSender(), new EventArguments()) { Source = action });
             RaiseEvents(btn);
 
-            for (int i = 0; i < 30 && Thread.VolatileRead(ref counter) != ValidEventData.Count; i++)
-            {
-                Thread.Sleep(50);
-            }
             Assert.Equal(ValidEventData.Count, counter);
         }
     }
