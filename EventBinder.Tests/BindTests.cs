@@ -78,7 +78,7 @@ namespace EventBinder.Tests
             { Source = action });
             btn.RaiseEvent(args);
 
-            Assert.Equal(ValidEventData.Count, counter);
+            Assert.Equal(1, counter);
         }
     }
 }
