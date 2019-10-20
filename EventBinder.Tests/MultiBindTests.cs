@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -35,6 +36,25 @@ namespace EventBinder.Tests
             RaiseEvents(btn);
 
             Assert.Equal(ValidEventData.Count, counter);
+        }
+
+        [WpfFact]
+        public void MethodProperty_AsyncMethod_Success()
+        {
+            var counter = 0;
+            var btn = new Button();
+            Func<Task> func = async () =>
+            {
+                await Task.Run(() => {}).ConfigureAwait(false);
+                Interlocked.Increment(ref counter);
+            };
+
+            BindingOperations.SetBinding(btn, Bind.MethodProperty,
+                new EventBinding(JoinedEventPath, "Invoke") { Source = func });
+            RaiseEvents(btn);
+
+            Thread.Sleep(100);
+            Assert.Equal(ValidEventData.Count, Thread.VolatileRead(ref counter));
         }
 
         [WpfFact]

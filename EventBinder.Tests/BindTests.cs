@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -36,6 +38,26 @@ namespace EventBinder.Tests
             btn.RaiseEvent(args(btn));
 
             Assert.Equal(7, testValue);
+        }
+
+        [StaTheory]
+        [MemberData(nameof(ValidEventData))]
+        public void MethodProperty_AsyncMethod_Success(string eventName, Func<DependencyObject, RoutedEventArgs> args)
+        {
+            var testValue = -1;
+            var btn = new Button();
+            Func<Task> func = async () =>
+            {
+                await Task.Run(() => {}).ConfigureAwait(false);
+                Interlocked.Exchange(ref testValue, 7);
+            };
+
+            BindingOperations.SetBinding(btn, Bind.MethodProperty,
+                new EventBinding(eventName, "Invoke") { Source = func });
+            btn.RaiseEvent(args(btn));
+
+            Thread.Sleep(20);
+            Assert.Equal(7, Thread.VolatileRead(ref testValue));
         }
 
         [StaTheory]
