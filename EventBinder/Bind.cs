@@ -27,7 +27,7 @@ namespace EventBinder
                                 ?? throw new InvalidOperationException($"Cannot find the event '{eventPath}'");
                 var parameters = eventInfo.EventHandlerType.GetMethods().Single(m => m.Name == "Invoke").GetParameters();
                 var parameterExpressions = parameters.Select(
-                    p => LinqExpr.Expression.Parameter(p.ParameterType)).ToArray();
+                    p => LinqExpr.Expression.Parameter(p.ParameterType, "prm")).ToArray();
 
                 var expr = LinqExpr.Expression.Call(LinqExpr.Expression.Constant(callback.Target),
                     callback.Method, parameterExpressions);
@@ -52,7 +52,7 @@ namespace EventBinder
             catch (MissingMethodException ex)
             {
                 throw new MissingMethodException(
-                    $"Cannot find {eventBinding.MethodPath}({string.Join(",", arguments.Select(a => a?.GetType().Name ?? "null"))})", ex);
+                    $"Cannot find {eventBinding.MethodPath}({string.Join(",", arguments.Select(a => a?.GetType().Name ?? "null").ToArray())})", ex);
             }
         }
 
