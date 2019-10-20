@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -101,6 +102,25 @@ namespace EventBinder.Tests
             btn.RaiseEvent(args);
 
             Assert.Equal(1, counter);
+        }
+
+        [WpfFact]
+        public void MethodProperty_Binding_Success()
+        {
+            var properties = new[] { Bind.MethodProperty, Bind.MethodProperty2, Bind.MethodProperty3, Bind.MethodProperty4,
+                Bind.MethodProperty5, Bind.MethodProperty6, Bind.MethodProperty7, Bind.MethodProperty8, Bind.MethodProperty9 };
+
+            var btn = new Button();
+            for (var i = 0; i < properties.Length; i++)
+            {
+                BindingOperations.SetBinding(btn, properties[i], new EventBinding("Click", "Invoke") { Source = i });
+            }
+
+            for (var i = 0; i < properties.Length; i++)
+            {
+                var binding = BindingOperations.GetBinding(btn, properties[i]) as EventBinding;
+                Assert.Equal(i, binding.Source);
+            }
         }
     }
 }
