@@ -90,10 +90,32 @@ namespace EventBinder.Tests
             };
 
             BindingOperations.SetBinding(btn, Bind.MethodProperty, new EventBinding(
-                JoinedEventPath, "Invoke", new EventSender(), new EventArguments()) { Source = action });
+                JoinedEventPath, "Invoke", "$0", "$1") { Source = action });
             RaiseEvents(btn);
 
             Assert.Equal(ValidEventData.Count, counter);
+        }
+
+        [WpfFact]
+        public void MethodProperty_EventAndUserParameters_Success()
+        {
+            var numCounter = 0;
+            var strCounter = string.Empty;
+            var btn = new Button();
+            Action<EventArgs, int, object, string> action = (eventArgs, num, sender, str) =>
+            {
+                Assert.Equal(btn, sender);
+                Assert.Contains(ValidEventData.Select(d => (dynamic)d[1]), t => t(btn).GetType() == eventArgs.GetType());
+                numCounter += num;
+                strCounter += str;
+            };
+
+            BindingOperations.SetBinding(btn, Bind.MethodProperty, new EventBinding(
+                JoinedEventPath, "Invoke", "$1", 1, "$0", "1") { Source = action });
+            RaiseEvents(btn);
+
+            Assert.Equal(ValidEventData.Count, numCounter);
+            Assert.Equal(ValidEventData.Count, strCounter.Length);
         }
     }
 }

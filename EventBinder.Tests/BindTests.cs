@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -97,11 +96,34 @@ namespace EventBinder.Tests
             };
 
             BindingOperations.SetBinding(btn, Bind.MethodProperty, new EventBinding(
-                eventName, "Invoke", new EventSender(), new EventArguments())
-            { Source = action });
+                eventName, "Invoke", "$0", "$1") { Source = action });
             btn.RaiseEvent(args);
 
             Assert.Equal(1, counter);
+        }
+
+        [StaTheory]
+        [MemberData(nameof(ValidEventData))]
+        public void MethodProperty_EventAndUserParameters_Success(string eventName, Func<DependencyObject, RoutedEventArgs> argsFunc)
+        {
+            var numCounter = 0;
+            var strCounter = string.Empty;
+            var btn = new Button();
+            var args = argsFunc(btn);
+            Action<EventArgs, int, object, string> action = (eventArgs, num, sender, str) =>
+            {
+                Assert.Equal(btn, sender);
+                Assert.Equal(args, eventArgs);
+                numCounter += num;
+                strCounter += str;
+            };
+
+            BindingOperations.SetBinding(btn, Bind.MethodProperty, new EventBinding(
+                eventName, "Invoke", "$1", 1, "$0", "1") { Source = action });
+            btn.RaiseEvent(args);
+
+            Assert.Equal(1, numCounter);
+            Assert.Equal(1, strCounter.Length);
         }
 
         [WpfFact]
@@ -113,7 +135,7 @@ namespace EventBinder.Tests
             var btn = new Button();
             for (var i = 0; i < properties.Length; i++)
             {
-                BindingOperations.SetBinding(btn, properties[i], new EventBinding("Click", "Invoke") { Source = i });
+                BindingOperations.SetBinding(btn, properties[i], new EventBinding("Click", "Equals", i) { Source = i });
             }
 
             for (var i = 0; i < properties.Length; i++)
