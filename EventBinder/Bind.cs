@@ -21,10 +21,10 @@ namespace EventBinder
         {
             var eventBinding = (EventBinding)BindingOperations.GetBinding(source, args.Property)
                                ?? throw new InvalidOperationException("Cannot get binding");
-            Subscribe(source, eventBinding);
+            Subscribe(source, eventBinding, args.NewValue);
         }
 
-        private static void Subscribe(DependencyObject parent, EventBinding binding)
+        private static void Subscribe(DependencyObject parent, EventBinding binding, object source)
         {
             foreach (var eventPath in binding.EventPath.Split(','))
             {
@@ -36,7 +36,7 @@ namespace EventBinder
                 {
                     parameterTypes[i] = parameters[i].ParameterType;
                 }
-                var eventHandler = _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, binding);
+                var eventHandler = _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, binding, source);
                 eventInfo.AddEventHandler(parent, eventHandler);
             }
         }

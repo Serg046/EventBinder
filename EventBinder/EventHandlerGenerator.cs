@@ -12,7 +12,7 @@ namespace EventBinder
 
         public EventHandlerGenerator(ModuleBuilder module) => _module = module;
 
-        public Delegate GenerateHandler(Type eventHandler, EventBinding binding)
+        public Delegate GenerateHandler(Type eventHandler, EventBinding binding, object source)
         {
             var parameters = eventHandler.GetMethod("Invoke").GetParameters();
             var parameterTypes = new Type[parameters.Length];
@@ -25,12 +25,12 @@ namespace EventBinder
             var instanceFld = type.DefineField("_instance", typeof(object), FieldAttributes.Private);
             var argumentsFld = type.DefineField("_arguments", typeof(object[]), FieldAttributes.Private);
             GenerateCtor(type, instanceFld, argumentsFld);
-            GenerateHander(binding, instanceFld, argumentsFld, type, parameterTypes);
-            var instance = Activator.CreateInstance(type.CreateType(), new[] { binding.Source, binding.Arguments });
+            GenerateHander(binding, source, instanceFld, argumentsFld, type, parameterTypes);
+            var instance = Activator.CreateInstance(type.CreateType(), new[] { source, binding.Arguments });
             return Delegate.CreateDelegate(eventHandler, instance, HANDLER_METHOD_NAME);
         }
 
-        private void GenerateHander(EventBinding binding, FieldBuilder instanceFld, FieldBuilder argumentsFld,
+        private void GenerateHander(EventBinding binding, object source, FieldBuilder instanceFld, FieldBuilder argumentsFld,
             TypeBuilder typeBuilder, Type[] parameterTypes)
         {
             var method = typeBuilder.DefineMethod(HANDLER_METHOD_NAME, MethodAttributes.Public, typeof(void), parameterTypes);
@@ -67,7 +67,7 @@ namespace EventBinder
                 }
                 argumentTypes[i] = argumentType;
             }
-            var innerMethod = binding.Source.GetType().GetMethod(binding.MethodPath, argumentTypes);
+            var innerMethod = source.GetType().GetMethod(binding.MethodPath, argumentTypes);
             if (innerMethod == null) ThrowMissingMethodException(binding, argumentTypes);
             body.Emit(OpCodes.Callvirt, innerMethod);
             if (innerMethod.ReturnType != typeof(void))
