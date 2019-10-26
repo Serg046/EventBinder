@@ -46,6 +46,7 @@ namespace EventBinder
                     int.TryParse(str.Substring(1), out var eventArgIdx))
                 {
                     body.Emit(OpCodes.Ldarg, eventArgIdx + 1);
+                    if (parameterTypes.Length <= eventArgIdx) throw new ArgumentOutOfRangeException($"{str} is not available");
                     argumentType = parameterTypes[eventArgIdx];
                     if (argumentType.IsValueType)
                     {
