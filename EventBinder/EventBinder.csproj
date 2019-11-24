@@ -36,10 +36,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyReferenceAttribute.cs" />
-    <Compile Include="EventBinding.cs" />
+    <Compile Include="EventBindingExtension.cs" />
     <Compile Include="EventHandlerGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Bind.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
