@@ -8,13 +8,14 @@ namespace EventBinder
 {
     public class EventBindingExtension : MarkupExtension
     {
+        public const string ASSEMBLY_NAME = "EventBinder.EventHandler";
         private static readonly EventHandlerGenerator _eventHandlerGenerator;
 
         static EventBindingExtension()
         {
             _eventHandlerGenerator = new EventHandlerGenerator(AppDomain.CurrentDomain
-                .DefineDynamicAssembly(new AssemblyName("EventHadler"), AssemblyBuilderAccess.RunAndSave)
-                .DefineDynamicModule("EventHadler"));
+                .DefineDynamicAssembly(new AssemblyName(ASSEMBLY_NAME), AssemblyBuilderAccess.RunAndSave)
+                .DefineDynamicModule(ASSEMBLY_NAME));
         }
 
         public string MethodPath { get; }
@@ -36,7 +37,7 @@ namespace EventBinder
             frameworkElement.DataContextChanged += (sender, e) =>
             {
                 eventInfo.RemoveEventHandler(frameworkElement, handler);
-                handler = _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement.DataContext);
+                handler = _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement);
                 eventInfo.AddEventHandler(frameworkElement, handler);
             };
             frameworkElement.Unloaded += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);

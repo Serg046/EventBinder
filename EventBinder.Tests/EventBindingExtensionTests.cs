@@ -134,7 +134,7 @@ namespace EventBinder.Tests
         {
             object sender = null;
             EventArgs args = null;
-            var button = XamlReader.Parse<Button>($"<Button Name=\"Btn\" Click=\"{{e:EventBinding Invoke, $0, $1 }}\"/>");
+            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke, $0, $1 }\"/>");
             Action<object, EventArgs> action = (obj, e) => { sender = obj; args = e; };
             button.DataContext = action;
 
@@ -152,7 +152,7 @@ namespace EventBinder.Tests
             int num = -1;
             string str = "-1";
             object sender = null;
-            var button = XamlReader.Parse<Button>($"<Button Name=\"Btn\" Click=\"{{e:EventBinding Invoke, $1, 7, $0, `7` }}\"/>");
+            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke, $1, 7, $0, `7`}\"/>");
             Action<EventArgs, int, object, string> action = (e, n, obj, s)
                 => { args = e; num = n; sender = obj; str = s; };
             button.DataContext = action;
@@ -164,6 +164,47 @@ namespace EventBinder.Tests
             Assert.Equal(7, num);
             Assert.Equal(button, sender);
             Assert.Equal("7", str);
+        }
+
+        [WpfFact]
+        public void EventBinding_BindedNumberAsParam_Executed()
+        {
+            const double expected = 200;
+            double num = -1;
+            var button = XamlReader.Parse<Button>($"<Button Height=\"{expected}\" Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {{Binding ElementName=Btn, Path=Height}}}}\"/>");
+            button.DataContext = new Action<object>(n => num = (double)n);
+
+            button.RaiseClickEvent();
+
+            Assert.Equal(expected, num);
+        }
+
+        [WpfFact]
+        public void EventBinding_BindedStringAsParam_Executed()
+        {
+            const string expected = "test";
+            string str = "-1";
+            var button = XamlReader.Parse<Button>($"<Button Content=\"{expected}\" Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {{Binding ElementName=Btn, Path=Content}}}}\"/>");
+            button.DataContext = new Action<object>(s => str = (string)s);
+
+            button.RaiseClickEvent();
+
+            Assert.Equal(expected, str);
+        }
+
+        [WpfFact]
+        public void EventBinding_BindedValueChanged_ExecutedWithChanges()
+        {
+            const double expected = 200;
+            double num = -1;
+            var button = XamlReader.Parse<Button>($"<Button Height=\"{expected}\" Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {{Binding ElementName=Btn, Path=Height}}}}\"/>");
+            button.DataContext = new Action<object>(n => num = (double)n);
+            button.RaiseClickEvent();
+            Assert.Equal(expected, num);
+
+            button.Height++;
+            button.RaiseClickEvent();
+            Assert.Equal(expected + 1, num);
         }
     }
 }

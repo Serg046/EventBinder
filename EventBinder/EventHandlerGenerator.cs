@@ -3,6 +3,8 @@ using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using System.Windows;
+using System.Windows.Data;
 
 namespace EventBinder
 {
@@ -10,6 +12,7 @@ namespace EventBinder
     {
         private const string HANDLER_METHOD_NAME = "Handle";
         private readonly ModuleBuilder _module;
+        private static readonly DependencyPropertyCollection _properties = new DependencyPropertyCollection("Argument");
 
         public EventHandlerGenerator(ModuleBuilder module) => _module = module;
 
@@ -20,17 +23,17 @@ namespace EventBinder
             return method.CreateDelegate(eventHandler);
         }
 
-        public Delegate GenerateHandler(Type eventHandler, EventBindingExtension binding, object dataContext)
+        public Delegate GenerateHandler(Type eventHandler, EventBindingExtension binding, FrameworkElement source)
         {
             var parameterTypes = GetParameterTypes(eventHandler);
 
             var type = _module.DefineType(Guid.NewGuid().ToString(), TypeAttributes.Public);
-            var instanceFld = type.DefineField("_instance", typeof(object), FieldAttributes.Private);
+            var instanceFld = type.DefineField("_instance", source.GetType(), FieldAttributes.Private);
             var argumentsFld = type.DefineField("_arguments", typeof(object[]), FieldAttributes.Private);
             GenerateCtor(type, instanceFld, argumentsFld);
             var arguments = ResolveArguments(binding.Arguments);
-            GenerateHander(binding.MethodPath, arguments, dataContext, instanceFld, argumentsFld, type, parameterTypes);
-            var instance = Activator.CreateInstance(type.CreateType(), new object[] { dataContext, arguments });
+            GenerateHander(binding.MethodPath, arguments, source, instanceFld, argumentsFld, type, parameterTypes);
+            var instance = Activator.CreateInstance(type.CreateType(), new object[] { source, arguments });
             return Delegate.CreateDelegate(eventHandler, instance, HANDLER_METHOD_NAME);
         }
 
@@ -46,13 +49,15 @@ namespace EventBinder
             return parameterTypes;
         }
 
-        private void GenerateHander(string methodPath, object[] arguments, object dataContext, FieldBuilder instanceFld,
+        private void GenerateHander(string methodPath, object[] arguments, FrameworkElement source, FieldBuilder instanceFld,
             FieldBuilder argumentsFld, TypeBuilder typeBuilder, Type[] parameterTypes)
         {
             var method = typeBuilder.DefineMethod(HANDLER_METHOD_NAME, MethodAttributes.Public, typeof(void), parameterTypes);
             var body = method.GetILGenerator();
             body.Emit(OpCodes.Ldarg_0);
             body.Emit(OpCodes.Ldfld, instanceFld);
+            var dataContextProp = source.GetType().GetProperty(nameof(FrameworkElement.DataContext));
+            body.Emit(OpCodes.Call, dataContextProp.GetGetMethod());
             var argumentTypes = new Type[arguments.Length];
             for (var i = 0; i < arguments.Length; i++)
             {
@@ -80,9 +85,18 @@ namespace EventBinder
                         body.Emit(OpCodes.Unbox_Any, argumentType);
                     }
                 }
+                if (argument is Binding binding)
+                {
+                    body.Emit(OpCodes.Ldarg_0);
+                    body.Emit(OpCodes.Ldfld, instanceFld);
+                    body.Emit(OpCodes.Ldc_I4, i);
+                    var ResolveBindingMethod = GetType().GetMethod(nameof(ResolveBinding), BindingFlags.NonPublic | BindingFlags.Static);
+                    body.Emit(OpCodes.Call, ResolveBindingMethod);
+                    argumentType = typeof(object);
+                }
                 argumentTypes[i] = argumentType;
             }
-            var innerMethod = dataContext.GetType().GetMethod(methodPath, argumentTypes);
+            var innerMethod = source.DataContext.GetType().GetMethod(methodPath, argumentTypes);
             if (innerMethod == null) ThrowMissingMethodException(methodPath, argumentTypes);
             body.Emit(OpCodes.Callvirt, innerMethod);
             if (innerMethod.ReturnType != typeof(void))
@@ -90,6 +104,15 @@ namespace EventBinder
                 body.Emit(OpCodes.Pop);
             }
             body.Emit(OpCodes.Ret);
+        }
+
+        internal static object ResolveBinding(Binding binding, FrameworkElement source, int position)
+        {
+            if (!BindingOperations.IsDataBound(source, _properties[position]))
+            {
+                BindingOperations.SetBinding(source, _properties[position], binding);
+            }
+            return source.GetValue(_properties[position]);
         }
 
         private static void ThrowMissingMethodException(string methodPath, Type[] argumentTypes)
