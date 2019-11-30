@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace EventBinder
 {
@@ -87,6 +88,10 @@ namespace EventBinder
                 }
                 if (argument is Binding binding)
                 {
+                    var parent = GetParent(source) as FrameworkElement;
+                    var btn = parent.FindName(binding.ElementName) as DependencyObject;
+                    var prop = btn.GetType().GetProperty(binding.Path.Path).PropertyType;
+                    binding.Source = source;
                     body.Emit(OpCodes.Ldarg_0);
                     body.Emit(OpCodes.Ldfld, instanceFld);
                     body.Emit(OpCodes.Ldc_I4, i);
@@ -104,6 +109,12 @@ namespace EventBinder
                 body.Emit(OpCodes.Pop);
             }
             body.Emit(OpCodes.Ret);
+        }
+
+        private DependencyObject GetParent(DependencyObject obj)
+        {
+            var parent = VisualTreeHelper.GetParent(obj);
+            return parent != null ? GetParent(parent) : obj;
         }
 
         internal static object ResolveBinding(Binding binding, FrameworkElement source, int position)
