@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using Xunit;
 
 namespace EventBinder.Tests
@@ -172,7 +173,7 @@ namespace EventBinder.Tests
             const double expected = 200;
             double num = -1;
             var button = XamlReader.Parse<Button>($"<Button Height=\"{expected}\" Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {{Binding ElementName=Btn, Path=Height}}}}\"/>");
-            button.DataContext = new Action<object>(n => num = (double)n);
+            button.DataContext = new Action<double>(n => num = n);
 
             button.RaiseClickEvent();
 
@@ -184,12 +185,16 @@ namespace EventBinder.Tests
         {
             const string expected = "test";
             string str = "-1";
-            var button = XamlReader.Parse<Button>($"<Button Content=\"{expected}\" Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {{Binding ElementName=Btn, Path=Content}}}}\"/>");
-            button.DataContext = new Action<object>(s => str = (string)s);
+            var textBox = XamlReader.Parse<TextBox>($"<TextBox Text=\"{expected}\" Name=\"Tbl\" MouseDown=\"{{e:EventBinding Invoke, {{Binding ElementName=Tbl, Path=Text}}}}\"/>");
+            textBox.DataContext = new Action<string>(s => str = s);
 
-            button.RaiseClickEvent();
+			textBox.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left)
+			{
+				RoutedEvent = Mouse.MouseDownEvent,
+				Source = textBox
+			});
 
-            Assert.Equal(expected, str);
+			Assert.Equal(expected, str);
         }
 
         [WpfFact]
@@ -198,7 +203,7 @@ namespace EventBinder.Tests
             const double expected = 200;
             double num = -1;
             var button = XamlReader.Parse<Button>($"<Button Height=\"{expected}\" Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {{Binding ElementName=Btn, Path=Height}}}}\"/>");
-            button.DataContext = new Action<object>(n => num = (double)n);
+            button.DataContext = new Action<double>(n => num = n);
             button.RaiseClickEvent();
             Assert.Equal(expected, num);
 

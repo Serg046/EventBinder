@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace EventBinder
 {
@@ -87,12 +88,19 @@ namespace EventBinder
                 }
                 if (argument is Binding binding)
                 {
-                    body.Emit(OpCodes.Ldarg_0);
+					var parent = GetParent(source) as FrameworkElement;
+					var obj = parent.FindName(binding.ElementName) as DependencyObject;
+					var propType = obj.GetType().GetProperty(binding.Path.Path).PropertyType;
+					body.Emit(OpCodes.Ldarg_0);
                     body.Emit(OpCodes.Ldfld, instanceFld);
                     body.Emit(OpCodes.Ldc_I4, i);
-                    var ResolveBindingMethod = GetType().GetMethod(nameof(ResolveBinding), BindingFlags.NonPublic | BindingFlags.Static);
-                    body.Emit(OpCodes.Call, ResolveBindingMethod);
-                    argumentType = typeof(object);
+                    var resolveBindingMethod = GetType().GetMethod(nameof(ResolveBinding), BindingFlags.NonPublic | BindingFlags.Static);
+                    body.Emit(OpCodes.Call, resolveBindingMethod);
+                    if (propType != typeof(object))
+                    {
+	                    body.Emit(propType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, propType);
+                    }
+                    argumentType = propType;
                 }
                 argumentTypes[i] = argumentType;
             }
@@ -104,6 +112,12 @@ namespace EventBinder
                 body.Emit(OpCodes.Pop);
             }
             body.Emit(OpCodes.Ret);
+        }
+
+        private DependencyObject GetParent(DependencyObject obj)
+        {
+            var parent = VisualTreeHelper.GetParent(obj);
+            return parent != null ? GetParent(parent) : obj;
         }
 
         internal static object ResolveBinding(Binding binding, FrameworkElement source, int position)
