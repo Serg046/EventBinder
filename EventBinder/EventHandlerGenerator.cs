@@ -88,16 +88,19 @@ namespace EventBinder
                 }
                 if (argument is Binding binding)
                 {
-                    var parent = GetParent(source) as FrameworkElement;
-                    var btn = parent.FindName(binding.ElementName) as DependencyObject;
-                    var prop = btn.GetType().GetProperty(binding.Path.Path).PropertyType;
-                    binding.Source = source;
-                    body.Emit(OpCodes.Ldarg_0);
+					var parent = GetParent(source) as FrameworkElement;
+					var obj = parent.FindName(binding.ElementName) as DependencyObject;
+					var propType = obj.GetType().GetProperty(binding.Path.Path).PropertyType;
+					body.Emit(OpCodes.Ldarg_0);
                     body.Emit(OpCodes.Ldfld, instanceFld);
                     body.Emit(OpCodes.Ldc_I4, i);
-                    var ResolveBindingMethod = GetType().GetMethod(nameof(ResolveBinding), BindingFlags.NonPublic | BindingFlags.Static);
-                    body.Emit(OpCodes.Call, ResolveBindingMethod);
-                    argumentType = typeof(object);
+                    var resolveBindingMethod = GetType().GetMethod(nameof(ResolveBinding), BindingFlags.NonPublic | BindingFlags.Static);
+                    body.Emit(OpCodes.Call, resolveBindingMethod);
+                    if (propType != typeof(object))
+                    {
+	                    body.Emit(propType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, propType);
+                    }
+                    argumentType = propType;
                 }
                 argumentTypes[i] = argumentType;
             }
