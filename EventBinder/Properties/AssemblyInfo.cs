@@ -36,3 +36,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("1.1.0.0")]
 [assembly: AssemblyFileVersion("1.1.0.0")]
 [assembly: InternalsVisibleTo(EventBindingExtension.ASSEMBLY_NAME)]
+[assembly: InternalsVisibleTo("EventBinder.Tests")]

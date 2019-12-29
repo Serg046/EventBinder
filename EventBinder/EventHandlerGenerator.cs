@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -14,6 +15,8 @@ namespace EventBinder
         private const string HANDLER_METHOD_NAME = "Handle";
         private readonly ModuleBuilder _module;
         private static readonly DependencyPropertyCollection _properties = new DependencyPropertyCollection("Argument");
+		private readonly Dictionary<Type, Type> _emptyHandlerCache = new Dictionary<Type, Type>();
+		private readonly Dictionary<string, Type> _handlerCache = new Dictionary<string, Type>();
 
         public EventHandlerGenerator(ModuleBuilder module) => _module = module;
 
@@ -27,15 +30,32 @@ namespace EventBinder
         public Delegate GenerateHandler(Type eventHandler, EventBindingExtension binding, FrameworkElement source)
         {
             var parameterTypes = GetParameterTypes(eventHandler);
-
-            var type = _module.DefineType(Guid.NewGuid().ToString(), TypeAttributes.Public);
-            var instanceFld = type.DefineField("_instance", source.GetType(), FieldAttributes.Private);
-            var argumentsFld = type.DefineField("_arguments", typeof(object[]), FieldAttributes.Private);
-            GenerateCtor(type, instanceFld, argumentsFld);
             var arguments = ResolveArguments(binding.Arguments);
-            GenerateHander(binding.MethodPath, arguments, source, instanceFld, argumentsFld, type, parameterTypes);
-            var instance = Activator.CreateInstance(type.CreateType(), new object[] { source, arguments });
+            var key = GetKey(eventHandler, binding.MethodPath, arguments);
+
+			if (!_handlerCache.TryGetValue(key, out var handlerType))
+            {
+	            var type = _module.DefineType(Guid.NewGuid().ToString(), TypeAttributes.Public);
+	            var instanceFld = type.DefineField("_instance", source.GetType(), FieldAttributes.Private);
+	            var argumentsFld = type.DefineField("_arguments", typeof(object[]), FieldAttributes.Private);
+	            GenerateCtor(type, instanceFld, argumentsFld);
+	            GenerateHandler(binding.MethodPath, arguments, source, instanceFld, argumentsFld, type, parameterTypes);
+	            handlerType = type.CreateType();
+				_handlerCache.Add(key, handlerType);
+			}
+
+			var instance = Activator.CreateInstance(handlerType, new object[] { source, arguments });
             return Delegate.CreateDelegate(eventHandler, instance, HANDLER_METHOD_NAME);
+        }
+
+        private string GetKey(Type eventHandler, string methodPath, object[] arguments)
+        {
+	        var sb = new StringBuilder(eventHandler.FullName + methodPath);
+	        foreach (var argument in arguments)
+	        {
+		        sb.Append(argument.GetType().FullName);
+	        }
+	        return sb.ToString();
         }
 
         private static Type[] GetParameterTypes(Type eventHandler)
@@ -50,7 +70,7 @@ namespace EventBinder
             return parameterTypes;
         }
 
-        private void GenerateHander(string methodPath, object[] arguments, FrameworkElement source, FieldBuilder instanceFld,
+        private void GenerateHandler(string methodPath, object[] arguments, FrameworkElement source, FieldBuilder instanceFld,
             FieldBuilder argumentsFld, TypeBuilder typeBuilder, Type[] parameterTypes)
         {
             var method = typeBuilder.DefineMethod(HANDLER_METHOD_NAME, MethodAttributes.Public, typeof(void), parameterTypes);
