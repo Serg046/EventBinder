@@ -1,16 +1,14 @@
-﻿using EventBinder;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("EventBinder")]
+[assembly: AssemblyTitle("EventBinder.PerformanceTests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("EventBinder")]
+[assembly: AssemblyProduct("EventBinder.PerformanceTests")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -21,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("539e63ff-327c-4a83-84f2-784c35152e31")]
+[assembly: Guid("34835503-2361-4f26-8359-65475c40fa15")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -33,7 +31,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
-[assembly: InternalsVisibleTo(EventBindingExtension.ASSEMBLY_NAME)]
-[assembly: InternalsVisibleTo("EventBinder.PerformanceTests")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

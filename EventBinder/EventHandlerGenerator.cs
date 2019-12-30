@@ -15,16 +15,21 @@ namespace EventBinder
         private const string HANDLER_METHOD_NAME = "Handle";
         private readonly ModuleBuilder _module;
         private static readonly DependencyPropertyCollection _properties = new DependencyPropertyCollection("Argument");
-		private readonly Dictionary<Type, Type> _emptyHandlerCache = new Dictionary<Type, Type>();
+		private readonly Dictionary<Type, Delegate> _emptyHandlerCache = new Dictionary<Type, Delegate>();
 		private readonly Dictionary<string, Type> _handlerCache = new Dictionary<string, Type>();
 
         public EventHandlerGenerator(ModuleBuilder module) => _module = module;
 
         public Delegate GenerateEmptyHandler(Type eventHandler)
         {
-            var method = new DynamicMethod("EmptyHandler", typeof(void), GetParameterTypes(eventHandler), _module);
-            method.GetILGenerator().Emit(OpCodes.Ret);
-            return method.CreateDelegate(eventHandler);
+	        if (!_emptyHandlerCache.TryGetValue(eventHandler, out var handler))
+	        {
+		        var method = new DynamicMethod("EmptyHandler", typeof(void), GetParameterTypes(eventHandler), _module);
+		        method.GetILGenerator().Emit(OpCodes.Ret);
+		        handler = method.CreateDelegate(eventHandler);
+				_emptyHandlerCache.Add(eventHandler, handler);
+	        }
+            return handler;
         }
 
         public Delegate GenerateHandler(Type eventHandler, EventBindingExtension binding, FrameworkElement source)
