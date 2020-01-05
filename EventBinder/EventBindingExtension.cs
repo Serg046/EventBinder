@@ -18,8 +18,8 @@ namespace EventBinder
                 .DefineDynamicModule(ASSEMBLY_NAME));
         }
 
-        public string MethodPath { get; }
-        public object[] Arguments { get; }
+        internal string MethodPath { get; }
+        internal object[] Arguments { get; }
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
