@@ -32,7 +32,7 @@ namespace EventBinder
         {
             var parameterTypes = GetParameterTypes(eventHandler);
             var arguments = ResolveArguments(binding.Arguments);
-            var key = GetKey(eventHandler, binding.MethodPath, arguments);
+            var key = GetKey(eventHandler, source.DataContext, binding.MethodPath, arguments);
 
 			if (!_handlerCache.TryGetValue(key, out var handlerType))
             {
@@ -47,9 +47,10 @@ namespace EventBinder
             return Delegate.CreateDelegate(eventHandler, instance, Emitter.HANDLER_METHOD_NAME);
         }
 
-        private string GetKey(Type eventHandler, string methodPath, object[] arguments)
+        private string GetKey(Type eventHandler, object dataContext, string methodPath, object[] arguments)
         {
 	        var sb = new StringBuilder(eventHandler.FullName + methodPath);
+		    sb.Append(dataContext.GetType().FullName);
 	        foreach (var argument in arguments)
 	        {
 		        sb.Append(argument.GetType().FullName);

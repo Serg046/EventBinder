@@ -33,7 +33,9 @@ namespace EventBinder
             {
                 parameterTypes[i] = parameters[i].ParameterType;
             }
-            Delegate handler = _eventHandlerGenerator.GenerateEmptyHandler(eventInfo.EventHandlerType);
+            var handler = frameworkElement.DataContext != null
+                ? _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement)
+                : _eventHandlerGenerator.GenerateEmptyHandler(eventInfo.EventHandlerType);
             frameworkElement.DataContextChanged += (sender, e) =>
             {
                 eventInfo.RemoveEventHandler(frameworkElement, handler);
