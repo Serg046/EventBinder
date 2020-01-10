@@ -6,9 +6,6 @@ using System.Reflection.Emit;
 using System.Windows;
 using System.Windows.Controls;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
-using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using Xunit;
 
@@ -20,8 +17,7 @@ namespace EventBinder.PerformanceTests
 		[Fact]
 		public void GenerateEmptyHandler_OptimizedImpl_WorksFaster()
 		{
-			var benchmark = BenchmarkRunner.Run<EmptyEventHandler>(new ManualConfig()
-				.With(ConsoleLogger.Default).With(DefaultColumnProviders.Instance));
+			var benchmark = BenchmarkRunner.Run<EmptyEventHandler>(new BenchmarkConfig());
 			var results = benchmark.Reports.GroupBy(c => c.BenchmarkCase.Parameters[nameof(EventHandler.Iterations)]);
 			foreach (var result in results)
 			{
@@ -39,8 +35,7 @@ namespace EventBinder.PerformanceTests
 		[Fact]
 		public void GenerateHandler_OptimizedImpl_WorksFaster()
 		{
-			var benchmark = BenchmarkRunner.Run<EventHandler>(new ManualConfig()
-				.With(ConsoleLogger.Default).With(DefaultColumnProviders.Instance));
+			var benchmark = BenchmarkRunner.Run<EventHandler>(new BenchmarkConfig());
 			var results = benchmark.Reports.GroupBy(c => c.BenchmarkCase.Parameters[nameof(EventHandler.Iterations)]);
 			foreach (var result in results)
 			{
