@@ -224,6 +224,19 @@ namespace EventBinder.Tests
 
             Assert.True(dataContext.Executed);
         }
+
+        [WpfFact]
+        public void EventBinding_SimpleActionViaCSharp_Executed()
+        {
+	        var executed = false;
+	        var button = XamlReader.Parse<Button>("<Button/>");
+	        button.DataContext = new Action(() => executed = true);
+            EventBinding.Bind(button, "Click", "Invoke");
+
+            button.RaiseClickEvent();
+
+	        Assert.True(executed);
+        }
     }
 
     public class XamlViewModel

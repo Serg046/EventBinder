@@ -16,7 +16,7 @@ namespace EventBinder.PerformanceTests
 {
 	public class EventHandlerGeneratorTests
 	{
-#if NET30 // Fails for .net core with multiple iterations, looks optimized
+#if NETFRAMEWORK // Fails for .net core with multiple iterations, looks optimized
 		[Fact]
 		public void GenerateEmptyHandler_OptimizedImpl_WorksFaster()
 		{
@@ -59,9 +59,9 @@ namespace EventBinder.PerformanceTests
 #if NET30
 	        var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(EventBindingExtension.ASSEMBLY_NAME), AssemblyBuilderAccess.Run);
 #else
-			var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(EventBindingExtension.ASSEMBLY_NAME), AssemblyBuilderAccess.Run);
+			var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(EventBinding.ASSEMBLY_NAME), AssemblyBuilderAccess.Run);
 #endif
-			return assemblyBuilder.DefineDynamicModule(EventBindingExtension.ASSEMBLY_NAME);
+			return assemblyBuilder.DefineDynamicModule(EventBinding.ASSEMBLY_NAME);
 		}
 
 		public class EmptyEventHandler
@@ -120,14 +120,14 @@ namespace EventBinder.PerformanceTests
 		{
 			private readonly ModuleBuilder _moduleBuilder;
 			private readonly Type _handlerType;
-			private readonly EventBindingExtension _binding;
+			private readonly EventBinding _binding;
 			private readonly EventHandlerGenerator _generator;
 
 			public EventHandler()
 			{
 				_moduleBuilder = CreateModuleBuilder();
 				_handlerType = typeof(RoutedEventHandler);
-				_binding = new EventBindingExtension("Invoke");
+				_binding = new EventBinding("Invoke");
 				_generator = CreateGenerator();
 			}
 

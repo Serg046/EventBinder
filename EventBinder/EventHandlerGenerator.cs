@@ -28,7 +28,7 @@ namespace EventBinder
             return handler;
         }
 
-        public Delegate GenerateHandler(Type eventHandler, EventBindingExtension binding, FrameworkElement source)
+        public Delegate GenerateHandler(Type eventHandler, EventBinding binding, FrameworkElement source)
         {
             var parameterTypes = GetParameterTypes(eventHandler);
             var arguments = ResolveArguments(binding.Arguments);
