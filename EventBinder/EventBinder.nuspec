@@ -11,7 +11,9 @@
     <tags>Binding Event Command EventToCommand EventTrigger ViewModel</tags>
   </metadata>
   <files>
-    <file src="bin\$Configuration$\net30\EventBinder.dll" target="lib\net30" />
-    <file src="bin\$Configuration$\net30\EventBinder.pdb" target="lib\net30" />
+    <file src="bin\Release\net30\EventBinder.dll" target="lib\net30" />
+    <file src="bin\Release\net30\EventBinder.pdb" target="lib\net30" />
+    <file src="bin\Release\netcoreapp3.0\EventBinder.dll" target="lib\netcoreapp3.0" />
+    <file src="bin\Release\netcoreapp3.0\EventBinder.pdb" target="lib\netcoreapp3.0" />
   </files>
 </package>

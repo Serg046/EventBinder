@@ -54,9 +54,12 @@ namespace EventBinder.PerformanceTests
 
 		private static ModuleBuilder CreateModuleBuilder()
 		{
-			return AppDomain.CurrentDomain
-				.DefineDynamicAssembly(new AssemblyName(EventBindingExtension.ASSEMBLY_NAME), AssemblyBuilderAccess.RunAndSave)
-				.DefineDynamicModule(EventBindingExtension.ASSEMBLY_NAME);
+#if NET30
+	        var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(EventBindingExtension.ASSEMBLY_NAME), AssemblyBuilderAccess.Run);
+#else
+			var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(EventBindingExtension.ASSEMBLY_NAME), AssemblyBuilderAccess.Run);
+#endif
+			return assemblyBuilder.DefineDynamicModule(EventBindingExtension.ASSEMBLY_NAME);
 		}
 
 		public class EmptyEventHandler

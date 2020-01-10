@@ -13,9 +13,12 @@ namespace EventBinder
 
         static EventBindingExtension()
         {
-            _eventHandlerGenerator = new EventHandlerGenerator(AppDomain.CurrentDomain
-                .DefineDynamicAssembly(new AssemblyName(ASSEMBLY_NAME), AssemblyBuilderAccess.RunAndSave)
-                .DefineDynamicModule(ASSEMBLY_NAME));
+#if NET30
+	        var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName(ASSEMBLY_NAME), AssemblyBuilderAccess.Run);
+#else
+	        var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(ASSEMBLY_NAME), AssemblyBuilderAccess.Run);
+#endif
+            _eventHandlerGenerator = new EventHandlerGenerator(assemblyBuilder.DefineDynamicModule(ASSEMBLY_NAME));
         }
 
         internal string MethodPath { get; }
@@ -25,8 +28,8 @@ namespace EventBinder
         {
             if (serviceProvider == null) return this;
             var target = (IProvideValueTarget)serviceProvider.GetService(typeof(IProvideValueTarget));
-            var frameworkElement = target.TargetObject as FrameworkElement ?? throw new InvalidOperationException($"Only FrameworkElements are supported");
-            var eventInfo = target.TargetProperty as EventInfo ?? throw new InvalidOperationException($"Only events are supported");
+            var frameworkElement = target.TargetObject as FrameworkElement ?? throw new InvalidOperationException("Only FrameworkElements are supported");
+            var eventInfo = target.TargetProperty as EventInfo ?? throw new InvalidOperationException("Only events are supported");
             var parameters = eventInfo.EventHandlerType.GetMethod("Invoke").GetParameters();
             var parameterTypes = new Type[parameters.Length];
             for (var i = 0; i < parameters.Length; i++)
