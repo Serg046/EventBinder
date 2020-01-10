@@ -237,6 +237,19 @@ namespace EventBinder.Tests
 
 	        Assert.True(executed);
         }
+
+        [WpfFact]
+        public void EventBinding_NestedModel_Executed()
+        {
+	        var viewModel = new NestedViewModel();
+	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding ViewModel1.ViewModel2.Invoke}\"/>");
+	        button.DataContext = viewModel;
+
+            Assert.False(viewModel.ViewModel1.ViewModel2.Executed);
+	        button.RaiseClickEvent();
+
+            Assert.True(viewModel.ViewModel1.ViewModel2.Executed);
+        }
     }
 
     public class XamlViewModel
@@ -244,5 +257,15 @@ namespace EventBinder.Tests
 	    public bool Executed { get; private set; }
 
 	    public void Invoke() => Executed = true;
+    }
+
+    public class NestedViewModel
+    {
+	    public ViewModel ViewModel1 { get; } = new ViewModel();
+
+	    public class ViewModel
+        {
+		    public XamlViewModel ViewModel2 = new XamlViewModel();
+        }
     }
 }
