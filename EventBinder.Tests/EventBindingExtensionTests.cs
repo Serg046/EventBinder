@@ -250,6 +250,19 @@ namespace EventBinder.Tests
 
             Assert.True(viewModel.ViewModel1.ViewModel2.Executed);
         }
+
+        [WpfFact]
+        public void EventBinding_BindedNestedProp_Executed()
+        {
+	        const double expected = 200;
+	        double num = -1;
+	        var button = XamlReader.Parse<Button>($"<Button Margin=\"{expected},0,0,0\" Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {{Binding ElementName=Btn, Path=Margin.Left}}}}\"/>");
+	        button.DataContext = new Action<double>(n => num = n);
+
+	        button.RaiseClickEvent();
+
+	        Assert.Equal(expected, num);
+        }
     }
 
     public class XamlViewModel

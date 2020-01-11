@@ -57,10 +57,10 @@ namespace EventBinder
 		{
 			if (instance == null) return null;
 
+			var type = instance.GetType();
 			var idx = path.IndexOf('.');
 			if (idx != -1)
 			{
-				var type = instance.GetType();
 				var memberName = path.Substring(0, idx);
 				object newInstance = null;
 				var property = type.GetProperty(memberName);
@@ -80,7 +80,7 @@ namespace EventBinder
 				}
 				return GetMethod(body, newInstance, path.Substring(idx + 1), argumentTypes);
 			}
-			return instance.GetType().GetMethod(path, argumentTypes);
+			return type.GetMethod(path, argumentTypes);
 		}
 
 		private ResolvedArguments EmitArguments(object[] arguments, Type[] parameterTypes)
@@ -139,17 +139,31 @@ namespace EventBinder
 		{
 			var parent = GetParent(_source) as FrameworkElement;
 			var obj = parent.FindName(binding.ElementName) as DependencyObject;
-			var propType = obj.GetType().GetProperty(binding.Path.Path).PropertyType;
+			var argType = GetArgType(obj, binding.Path.Path);
 			opCodes.Add(b => b.Emit(OpCodes.Ldarg_0));
 			opCodes.Add(b => b.Emit(OpCodes.Ldfld, _instanceField));
 			opCodes.Add(b => b.Emit(OpCodes.Ldc_I4, position));
 			var resolveBindingMethod = GetType().GetMethod(nameof(ResolveBinding), BindingFlags.NonPublic | BindingFlags.Static);
 			opCodes.Add(b => b.Emit(OpCodes.Call, resolveBindingMethod));
-			if (propType != typeof(object))
+			if (argType != typeof(object))
 			{
-				opCodes.Add(b => b.Emit(propType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, propType));
+				opCodes.Add(b => b.Emit(argType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, argType));
 			}
-			return propType;
+			return argType;
+		}
+
+		private Type GetArgType(object instance, string path)
+		{
+			var idx = path.IndexOf('.');
+			var type = instance.GetType();
+			if (idx != -1)
+			{
+				var memberName = path.Substring(0, idx);
+				var newInstance = type.GetProperty(memberName)?.GetValue(instance, null)
+					?? type.GetField(memberName)?.GetValue(instance);
+				return GetArgType(newInstance, path.Substring(idx + 1));
+			}
+			return type.GetProperty(path)?.PropertyType ?? type.GetField(path)?.FieldType;
 		}
 
 		internal static object ResolveBinding(Binding binding, FrameworkElement source, int position)
