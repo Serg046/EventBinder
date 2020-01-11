@@ -263,6 +263,23 @@ namespace EventBinder.Tests
 
 	        Assert.Equal(expected, num);
         }
+
+        [WpfFact]
+        public void EventBinding_BindedVmProp_Executed()
+        {
+	        const double expected = 200;
+	        double num = -1;
+	        var button = XamlReader.Parse<Button>($"<Button Margin=\"{expected},0,0,0\" Name=\"Btn\" Click=\"{{e:EventBinding Action.Invoke, {{Binding Num}}}}\"/>");
+	        button.DataContext = new
+	        {
+                Num = expected,
+                Action = new Action<double>(n => num = n)
+            };
+
+	        button.RaiseClickEvent();
+
+	        Assert.Equal(expected, num);
+        }
     }
 
     public class XamlViewModel
