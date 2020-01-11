@@ -137,8 +137,7 @@ namespace EventBinder
 
 		private Type HandleBindingArg(Binding binding, ICollection<Action<ILGenerator>> opCodes, int position)
 		{
-			var parent = GetParent(_source) as FrameworkElement;
-			var argType = GetArgType(binding, parent);
+			var argType = GetArgType(binding);
 			opCodes.Add(b => b.Emit(OpCodes.Ldarg_0));
 			opCodes.Add(b => b.Emit(OpCodes.Ldfld, _instanceField));
 			opCodes.Add(b => b.Emit(OpCodes.Ldc_I4, position));
@@ -151,14 +150,23 @@ namespace EventBinder
 			return argType;
 		}
 
-		private Type GetArgType(Binding binding, FrameworkElement parent)
+		private Type GetArgType(Binding binding)
 		{
+			object context;
 			if (string.IsNullOrEmpty(binding.ElementName))
 			{
-				return GetArgType(_source.DataContext, binding.Path.Path);
+				context = _source.DataContext;
 			}
-			var obj = parent.FindName(binding.ElementName) as DependencyObject;
-			return GetArgType(obj, binding.Path.Path);
+			else
+			{
+				var parent = GetParent(_source) as FrameworkElement;
+				context = parent.FindName(binding.ElementName) as DependencyObject;
+			}
+
+			var path = binding.Path?.Path;
+			return string.IsNullOrEmpty(path) || path == "."
+				? context.GetType()
+				: GetArgType(context, path);
 		}
 
 		private Type GetArgType(object instance, string path)

@@ -280,6 +280,35 @@ namespace EventBinder.Tests
 
 	        Assert.Equal(expected, num);
         }
+
+        [WpfFact]
+        public void EventBinding_BindedPropWithoutPath_Executed()
+        {
+	        var executed = false;
+	        var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke, {Binding ElementName=Btn}}\"/>");
+	        button.DataContext = new Action<Button>(btn => executed = button == btn);
+
+	        button.RaiseClickEvent();
+
+	        Assert.True(executed);
+        }
+
+        [WpfFact]
+        public void EventBinding_BindedVmPropWithoutPath_Executed()
+        {
+	        var executed = false;
+            object viewModel = null;
+	        viewModel = new
+            {
+	            Action = new Action<object>(vm => executed = vm == viewModel)
+            };
+            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Action.Invoke, {Binding}}\"/>");
+            button.DataContext = viewModel;
+
+	        button.RaiseClickEvent();
+
+	        Assert.True(executed);
+        }
     }
 
     public class XamlViewModel
