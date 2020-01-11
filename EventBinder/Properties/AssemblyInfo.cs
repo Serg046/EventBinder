@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("EventBinder")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Allows to bind a method to any event")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("EventBinder")]

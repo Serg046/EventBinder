@@ -3,5 +3,11 @@
     <TargetFrameworks>net30;netcoreapp3.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWPF>true</UseWPF>
+    <Version>2.1</Version>
+    <Authors>Sergey Aseev (Serg046)</Authors>
+    <PackageProjectUrl>https://github.com/Serg046/EventBinder</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Serg046/EventBinder</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Binding Event Method EventToMethod MethodToEvent EventTrigger ViewModel</PackageTags>
   </PropertyGroup>
 </Project>
