@@ -158,9 +158,9 @@ namespace EventBinder
 				context = _source.DataContext;
 			}
 			else
-			{
-				var parent = GetParent(_source) as FrameworkElement;
-				context = parent.FindName(binding.ElementName) as DependencyObject;
+            {
+                var root = Window.GetWindow(_source) ?? (FrameworkElement)GetRootParent(_source);
+				context = root.FindName(binding.ElementName) as DependencyObject;
 			}
 
 			var path = binding.Path?.Path;
@@ -223,10 +223,10 @@ namespace EventBinder
 			throw new MissingMethodException(sb.ToString());
 		}
 
-		private DependencyObject GetParent(DependencyObject obj)
+		private DependencyObject GetRootParent(DependencyObject obj)
 		{
 			var parent = VisualTreeHelper.GetParent(obj);
-			return parent != null ? GetParent(parent) : obj;
+			return parent != null ? GetRootParent(parent) : obj;
 		}
 
 		internal class EventArg

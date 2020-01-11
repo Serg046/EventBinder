@@ -1,89 +1,68 @@
 # EventBinder
 
-[![Build status](https://ci.appveyor.com/api/projects/status/2k5lfrim0dxbekuy?svg=true)](https://ci.appveyor.com/project/Serg046/eventbinder) [![NuGet version](https://badge.fury.io/nu/EventBinder.svg)](https://www.nuget.org/packages/EventBinder)
+Do you want to bind your action to any event without ugly EventTrigger, custom UI controls, huge mvvm frameworks, etc? Try `EventBinding` which will allow you to bind your method directly to any event, including your own events, without a need to wrap the method in ICommand container.
+
+[![Build status](https://ci.appveyor.com/api/projects/status/2k5lfrim0dxbekuy?svg=true)](https://ci.appveyor.com/project/Serg046/eventbinder) [![NuGet version](https://badge.fury.io/nu/EventBinder.svg)](https://www.nuget.org/packages/EventBinder) [![.NET Framework 3](https://img.shields.io/badge/.NET%20%20Framework%203-supported-4CC61E)](https://www.nuget.org/packages/EventBinder) [![.NET Core 3](https://img.shields.io/badge/.NET%20%20Core%203-supported-4CC61E)](https://www.nuget.org/packages/EventBinder)
 
 ## Getting started
 
 Just install the nuget package. If it does not work and you get XamlParseException, then apply `[assembly: EventBinder.AssemblyReference]` attribute in your AssemblyInfo.cs.
 
-## ICommand binding
+## Features
+- Binding to methods without ICommand
+- Binding to methods with return types
+- Binding to async methods
+- Binding to nested objects using `.` delimiter, properties and fields are supported
+- Passing user parameters of int, double, decimal or string type
+- Passing event parameters using `$` sign and position number (`$0`, `$1`, etc)
+- Passing default `{Binding}` as a parameter
 
-Do you want to bind your command to any event without ugly EventTrigger, custom UI controls, huge mvvm frameworks, etc?
-Try `EventBinding`:
-
+You can find most of the features in the example below:
 ```csharp
 public class ViewModel
 {
-    public ViewModel() => Test = new Command();
-    public Command Test { get; }
+    public MetadataViewModel Metadata { get; } = new MetadataViewModel();
 
-    public class Command : ICommand
+    public async Task ShowMessage(string msg, decimal centenary, double year)
     {
-        public void Execute(object parameter) => Debug.WriteLine(parameter);
-        public bool CanExecute(object parameter) => true;
-        public event EventHandler CanExecuteChanged;
+        await Task.Delay(0);
+        MessageBox.Show(msg + centenary + year);
+    }
+
+    public class MetadataViewModel
+    {
+        public void ShowInfo(Window window, double windowWidth, ViewModel viewModel, object sender, MouseButtonEventArgs eventArgs)
+        {
+            var sb = new StringBuilder("Window width: ")
+                .AppendLine(windowWidth.ToString())
+                .Append("View model type: ").AppendLine(viewModel.GetType().Name)
+                .Append("Sender type: ").AppendLine(sender.GetType().Name)
+                .Append("Clicked button: ").AppendLine(eventArgs.ChangedButton.ToString())
+                .Append("Mouse X: ").AppendLine(eventArgs.GetPosition(window).X.ToString())
+                .Append("Mouse Y: ").AppendLine(eventArgs.GetPosition(window).Y.ToString());
+            MessageBox.Show(sb.ToString());
+        }
     }
 }
 ```
+#### XAML-side binding
 ```xaml
-<!--xmlns:e="clr-namespace:EventBinder;assembly=EventBinder"-->
-<Rectangle e:Bind.Command="{e:EventBinding Test, MouseLeftButtonDown}" Fill="LightGray"
-           e:Bind.CommandParameter="{Binding ElementName=CurrentWindow, Path=ActualHeight}"/>
+<Window xmlns:e="clr-namespace:EventBinder;assembly=EventBinder" Name="Wnd">
+    <Rectangle Fill="LightGray" Name="Rct"
+        MouseLeftButtonDown="{e:EventBinding ShowMessage, `Happy `, 20m, 20.0 }"
+        MouseRightButtonDown="{e:EventBinding Metadata.ShowInfo, {Binding ElementName=Wnd},
+            {Binding ElementName=Wnd, Path=ActualWidth}, {Binding}, $0, $1 }" />
+</Window>
 ```
-
-## Multiple events binding
-
-Do you want to bind the same command to multiple events? Just separate them with comma delimiter:
-
-```xaml
-<!--xmlns:e="clr-namespace:EventBinder;assembly=EventBinder"-->
-<Rectangle e:Bind.Command="{e:EventBinding Test, MouseLeftButtonDown\,MouseRightButtonDown}" Fill="LightGray"
-           e:Bind.CommandParameter="{Binding ElementName=CurrentWindow, Path=ActualHeight}"/>
-```
-
-## Action binding
-
-You do not need ICommand implementation. You can bind `Action<object>` or `Action` instead:
-
+#### C#-side binding
 ```csharp
-public class ViewModel
-{
-    public Action<object> Test => parameter => Debug.WriteLine(parameter);
-    public Action Test2 => () => Debug.WriteLine("Hey");
-}
-```
-
-```xaml
-<!--xmlns:e="clr-namespace:EventBinder;assembly=EventBinder"-->
-<Rectangle e:Bind.PrmAction="{e:EventBinding Test, MouseLeftButtonDown\,MouseRightButtonDown}" Fill="LightGray"
-           e:Bind.ActionParameter="{Binding ElementName=CurrentWindow, Path=ActualHeight}"/>
-<Rectangle e:Bind.Action="{e:EventBinding Test2, MouseDown}" Fill="LightGray" />
-```
-
-## Task binding
-
-If you need asynchronous action but `async () => await yourTask` does not fit because you cannot wait for completion, then bind `Func<object, Task>` or `Func<Task>`:
-
-```csharp
-public class ViewModel
-{
-    public Func<object, Task> Test => async parameter =>
-    {
-        await Task.Delay(1);
-        Debug.WriteLine(parameter);
-    };
-    
-    public Func<Task> Test2 => async () =>
-    {
-        await Task.Delay(1);
-        Debug.WriteLine("Hey");
-    };
-}
-```
-
-```xaml
-<!--xmlns:e="clr-namespace:EventBinder;assembly=EventBinder"-->
-<Rectangle e:Bind.AwaitablePrmAction="{e:EventBinding Test, MouseLeftButtonDown\,MouseRightButtonDown}" Fill="LightGray"
-           e:Bind.AwaitableActionParameter="{Binding ElementName=CurrentWindow, Path=ActualHeight}"/>
-<Rectangle e:Bind.AwaitableAction="{e:EventBinding Test2, MouseDown}" Fill="LightGray" />
+EventBinding.Bind(Rct, nameof(Rct.MouseLeftButtonDown),
+    nameof(ViewModel.ShowMessage),
+    "`Happy `", 20m, 20.0);
+EventBinding.Bind(Rct, nameof(Rct.MouseRightButtonDown),
+    nameof(ViewModel.Metadata) + "." + nameof(ViewModel.Metadata.ShowInfo),
+    new Binding { ElementName = nameof(Wnd)},
+    new Binding("ActualWidth") { ElementName = nameof(Wnd) },
+    new Binding(),
+    "$0", "$1");
 ```

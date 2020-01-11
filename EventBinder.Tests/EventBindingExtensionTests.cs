@@ -14,7 +14,7 @@ namespace EventBinder.Tests
         public void EventBinding_SimpleAction_Executed()
         {
             var executed = false;
-            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke}\"/>");
+            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
             button.DataContext = new Action(() => executed = true);
 
             button.RaiseClickEvent();
@@ -26,7 +26,7 @@ namespace EventBinder.Tests
         public void EventBinding_UnloadedButton_NoSense()
         {
             var executed = false;
-            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke}\"/>");
+            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
             button.DataContext = new Action(() => executed = true);
 
             button.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent, button));
@@ -39,7 +39,7 @@ namespace EventBinder.Tests
         public void EventBinding_TwoDataContexts_TheLastExecuted()
         {
             var executed = false;
-            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke}\"/>");
+            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
             button.DataContext = new Action(() => executed = false);
             button.DataContext = new Action(() => executed = true);
 
@@ -52,7 +52,7 @@ namespace EventBinder.Tests
         public void EventBinding_Func_Executed()
         {
             var executed = false;
-            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke}\"/>");
+            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
             Func<int> func = () => { executed = true; return -1; };
             button.DataContext = func;
 
@@ -65,7 +65,7 @@ namespace EventBinder.Tests
         public async Task EventBinding_AsyncMethod_Executed()
         {
             var executed = false;
-            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke}\"/>");
+            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
             Func<Task> func = async () =>
             {
                 await Task.Run(() => { }).ConfigureAwait(false);
@@ -86,7 +86,7 @@ namespace EventBinder.Tests
             const string expectedStr = "7";
             var num = 0;
             var str = "";
-            var button = XamlReader.Parse<Button>($"<Button Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {expectedNum}, `{expectedStr}` }}\"/>");
+            var button = XamlReader.Parse<Button>($"<Button Click=\"{{e:EventBinding Invoke, {expectedNum}, `{expectedStr}` }}\"/>");
             Action<int, string> action = (n, s) => { num = n; str = s; };
             button.DataContext = action;
 
@@ -103,7 +103,7 @@ namespace EventBinder.Tests
             const string expectedStr = "7";
             double num = 0;
             var str = "";
-            var button = XamlReader.Parse<Button>($"<Button Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {expectedNum}.0, `{expectedStr}` }}\"/>");
+            var button = XamlReader.Parse<Button>($"<Button Click=\"{{e:EventBinding Invoke, {expectedNum}.0, `{expectedStr}` }}\"/>");
             Action<double, string> action = (n, s) => { num = n; str = s; };
             button.DataContext = action;
 
@@ -120,7 +120,7 @@ namespace EventBinder.Tests
             const string expectedStr = "7";
             decimal num = 0;
             var str = "";
-            var button = XamlReader.Parse<Button>($"<Button Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {expectedNum}m, `{expectedStr}` }}\"/>");
+            var button = XamlReader.Parse<Button>($"<Button Click=\"{{e:EventBinding Invoke, {expectedNum}m, `{expectedStr}` }}\"/>");
             Action<decimal, string> action = (n, s) => { num = n; str = s; };
             button.DataContext = action;
 
@@ -135,7 +135,7 @@ namespace EventBinder.Tests
         {
             object sender = null;
             EventArgs args = null;
-            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke, $0, $1 }\"/>");
+            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke, $0, $1 }\"/>");
             Action<object, EventArgs> action = (obj, e) => { sender = obj; args = e; };
             button.DataContext = action;
 
@@ -153,7 +153,7 @@ namespace EventBinder.Tests
             int num = -1;
             string str = "-1";
             object sender = null;
-            var button = XamlReader.Parse<Button>("<Button Name=\"Btn\" Click=\"{e:EventBinding Invoke, $1, 7, $0, `7`}\"/>");
+            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke, $1, 7, $0, `7`}\"/>");
             Action<EventArgs, int, object, string> action = (e, n, obj, s)
                 => { args = e; num = n; sender = obj; str = s; };
             button.DataContext = action;
@@ -215,7 +215,7 @@ namespace EventBinder.Tests
         [WpfFact]
         public void EventBinding_DataContextIsSetBeforeEvaluation_Success()
         {
-	        var stackPanel = XamlReader.Parse<StackPanel>("<StackPanel><StackPanel.DataContext><local:XamlViewModel/></StackPanel.DataContext><StackPanel.Children><Button Name=\"Btn\" Click=\"{e:EventBinding Invoke}\"/></StackPanel.Children></StackPanel>");
+	        var stackPanel = XamlReader.Parse<StackPanel>("<StackPanel><StackPanel.DataContext><local:XamlViewModel/></StackPanel.DataContext><StackPanel.Children><Button Click=\"{e:EventBinding Invoke}\"/></StackPanel.Children></StackPanel>");
 	        var button = stackPanel.Children[0] as Button;
 	        var dataContext = button.DataContext as XamlViewModel;
 
@@ -269,7 +269,7 @@ namespace EventBinder.Tests
         {
 	        const double expected = 200;
 	        double num = -1;
-	        var button = XamlReader.Parse<Button>($"<Button Margin=\"{expected},0,0,0\" Name=\"Btn\" Click=\"{{e:EventBinding Action.Invoke, {{Binding Num}}}}\"/>");
+	        var button = XamlReader.Parse<Button>($"<Button Margin=\"{expected},0,0,0\" Click=\"{{e:EventBinding Action.Invoke, {{Binding Num}}}}\"/>");
 	        button.DataContext = new
 	        {
                 Num = expected,
