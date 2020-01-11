@@ -9,6 +9,5 @@
     <RepositoryUrl>https://github.com/Serg046/EventBinder</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>Binding Event Method EventToMethod MethodToEvent EventTrigger ViewModel</PackageTags>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 </Project>
