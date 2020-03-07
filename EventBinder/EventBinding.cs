@@ -24,6 +24,8 @@ namespace EventBinder
         internal string MethodPath { get; }
         internal object[] Arguments { get; }
 
+        public int? Debounce { get; set; }
+
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             if (serviceProvider == null) return this;

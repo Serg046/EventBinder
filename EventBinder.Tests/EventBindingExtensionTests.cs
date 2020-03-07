@@ -309,6 +309,27 @@ namespace EventBinder.Tests
 
 	        Assert.True(executed);
         }
+
+        [WpfFact]
+        public async Task EventBinding_DebouncedAction_Executed()
+        {
+	        var counter = 0;
+	        string prm = null;
+	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke, `prm`, Debounce = 500}\"/>");
+	        button.DataContext = new Action<string>(p =>
+	        {
+		        counter++;
+		        prm = p;
+	        });
+
+	        button.RaiseClickEvent();
+	        button.RaiseClickEvent();
+	        button.RaiseClickEvent();
+
+	        await Task.Delay(1000);
+	        Assert.Equal(1, counter);
+	        Assert.Equal("prm", prm);
+        }
     }
 
     public class XamlViewModel

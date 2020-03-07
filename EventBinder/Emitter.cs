@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -13,20 +14,22 @@ namespace EventBinder
 	{
         internal const string HANDLER_METHOD_NAME = "Handle";
 
-		private readonly TypeBuilder _typeBuilder;
-		private readonly string _methodPath;
+        private readonly TypeBuilder _typeBuilder;
+		private readonly EventBinding _eventBinding;
 		private readonly FrameworkElement _source;
 		private readonly FieldInfo _instanceField;
 		private readonly FieldInfo _argumentsField;
+		private readonly FieldInfo _timerField;
 		private static readonly DependencyPropertyCollection _properties = new DependencyPropertyCollection("Argument");
 
-		public Emitter(TypeBuilder typeBuilder, string methodPath, FrameworkElement source)
+		public Emitter(TypeBuilder typeBuilder, EventBinding eventBinding, FrameworkElement source)
 		{
 			_typeBuilder = typeBuilder;
-			_methodPath = methodPath;
+			_eventBinding = eventBinding;
 			_source = source;
 			_instanceField = _typeBuilder.DefineField("_instance", source.GetType(), FieldAttributes.Private);
 			_argumentsField = _typeBuilder.DefineField("_arguments", typeof(object[]), FieldAttributes.Private);
+			_timerField = _typeBuilder.DefineField("_timer", typeof(Timer), FieldAttributes.Private);
 		}
 
 		public void GenerateHandler(object[] arguments, Type[] parameterTypes)
@@ -39,18 +42,93 @@ namespace EventBinder
 			var dataContextProp = _source.GetType().GetProperty(nameof(FrameworkElement.DataContext));
 			body.Emit(OpCodes.Call, dataContextProp.GetGetMethod());
 			var resolvedArguments = EmitArguments(arguments, parameterTypes);
-			var innerMethod = GetMethod(body, _source.DataContext, _methodPath, resolvedArguments.Types);
-			if (innerMethod == null) ThrowMissingMethodException(_methodPath, resolvedArguments.Types);
+			var innerMethod = GetMethod(body, _source.DataContext, _eventBinding.MethodPath, resolvedArguments.Types);
+			if (innerMethod == null) ThrowMissingMethodException(_eventBinding.MethodPath, resolvedArguments.Types);
 			foreach (var opCode in resolvedArguments.OpCodes)
 			{
 				opCode(body);
 			}
-			body.Emit(OpCodes.Callvirt, innerMethod);
-			if (innerMethod.ReturnType != typeof(void))
+			if (_eventBinding.Debounce.HasValue)
 			{
-				body.Emit(OpCodes.Pop);
+				GenerateDebouncedHandler(resolvedArguments, innerMethod, body);
 			}
+			else
+			{
+				body.Emit(OpCodes.Callvirt, innerMethod);
+				if (innerMethod.ReturnType != typeof(void))
+				{
+					body.Emit(OpCodes.Pop);
+				}
+			}
+
 			body.Emit(OpCodes.Ret);
+		}
+
+		private void GenerateDebouncedHandler(ResolvedArguments resolvedArguments, MethodInfo innerMethod, ILGenerator body)
+		{
+			var argTypes = new Type[resolvedArguments.Types.Length + 1];
+			Array.Copy(resolvedArguments.Types, 0, argTypes, 1, resolvedArguments.Types.Length);
+			argTypes[0] = _source.DataContext.GetType();
+			var debouncerModel = GenerateDebouncer(argTypes, innerMethod);
+			body.Emit(OpCodes.Newobj, debouncerModel.Constructor);
+
+			body.Emit(OpCodes.Ldarg_0);
+			body.Emit(OpCodes.Ldfld, _timerField);
+			var continuation = body.DefineLabel();
+			body.Emit(OpCodes.Brfalse_S, continuation);
+			body.Emit(OpCodes.Ldarg_0);
+			body.Emit(OpCodes.Ldfld, _timerField);
+			body.Emit(OpCodes.Call, typeof(Timer).GetMethod(nameof(Timer.Dispose),
+				BindingFlags.Instance | BindingFlags.Public, null, new Type[0], null));
+			body.MarkLabel(continuation);
+
+			body.Emit(OpCodes.Ldftn, debouncerModel.Method);
+			body.Emit(OpCodes.Newobj, typeof(TimerCallback).GetConstructors()[0]);
+			body.Emit(OpCodes.Ldnull);
+			body.Emit(OpCodes.Ldc_I4, _eventBinding.Debounce.Value);
+			body.Emit(OpCodes.Ldc_I4_M1);
+			body.Emit(OpCodes.Newobj, typeof(Timer).GetConstructor(
+				BindingFlags.CreateInstance | BindingFlags.Public | BindingFlags.Instance,
+				null, new[] {typeof(TimerCallback), typeof(object), typeof(int), typeof(int)}, null));
+
+			var variable = body.DeclareLocal(typeof(Timer));
+			body.Emit(OpCodes.Stloc, variable);
+			body.Emit(OpCodes.Ldarg_0);
+			body.Emit(OpCodes.Ldloc, variable);
+			body.Emit(OpCodes.Stfld, _timerField);
+		}
+
+		private DebouncerModel GenerateDebouncer(Type[] argTypes, MethodInfo bindedMethod)
+		{
+			var nestedTypeBuilder = _typeBuilder.DefineNestedType("Debouncer");
+			var ctor = nestedTypeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, argTypes);
+			var ctorBody = ctor.GetILGenerator();
+			var fields = new FieldInfo[argTypes.Length];
+			for (var i = 0; i < argTypes.Length; i++)
+			{
+				var field = nestedTypeBuilder.DefineField(i.ToString(), argTypes[i], FieldAttributes.Private);
+				fields[i] = field;
+				ctorBody.Emit(OpCodes.Ldarg_0);
+				ctorBody.Emit(OpCodes.Ldarg, i + 1);
+				ctorBody.Emit(OpCodes.Stfld, field);
+			}
+			ctorBody.Emit(OpCodes.Ret);
+			var method = nestedTypeBuilder.DefineMethod("Execute", MethodAttributes.Public,
+				typeof(void), new[] { typeof(object) });
+			var methodBody = method.GetILGenerator();
+			for (var i = 0; i < fields.Length; i++)
+			{
+				methodBody.Emit(OpCodes.Ldarg_0);
+				methodBody.Emit(OpCodes.Ldfld, fields[i]);
+			}
+			methodBody.Emit(OpCodes.Callvirt, bindedMethod);
+			if (bindedMethod.ReturnType != typeof(void))
+			{
+				methodBody.Emit(OpCodes.Pop);
+			}
+			methodBody.Emit(OpCodes.Ret);
+			nestedTypeBuilder.CreateType();
+			return new DebouncerModel(ctor, method);
 		}
 
 		private MethodInfo GetMethod(ILGenerator body, object instance, string path, Type[] argumentTypes)
@@ -251,6 +329,18 @@ namespace EventBinder
 
 			public Type[] Types { get; }
 			public IEnumerable<Action<ILGenerator>> OpCodes { get; }
+		}
+
+		private class DebouncerModel
+		{
+			public DebouncerModel(ConstructorInfo constructor, MethodInfo method)
+			{
+				Constructor = constructor;
+				Method = method;
+			}
+
+			public ConstructorInfo Constructor { get; }
+			public MethodInfo Method { get; }
 		}
 	}
 }

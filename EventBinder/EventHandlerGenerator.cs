@@ -37,7 +37,7 @@ namespace EventBinder
 			if (!_handlerCache.TryGetValue(key, out var handlerType))
             {
 	            var type = _module.DefineType(Guid.NewGuid().ToString(), TypeAttributes.Public);
-				var emitter = new Emitter(type, binding.MethodPath, source);
+				var emitter = new Emitter(type, binding, source);
 				emitter.GenerateHandler(arguments, parameterTypes);
 	            handlerType = type.CreateType();
 				_handlerCache.Add(key, handlerType);
