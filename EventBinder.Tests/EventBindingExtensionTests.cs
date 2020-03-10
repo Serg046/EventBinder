@@ -315,7 +315,7 @@ namespace EventBinder.Tests
         {
 	        var counter = 0;
 	        string prm = null;
-	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke, `prm`, Debounce = 500}\"/>");
+	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke, `prm`, Debounce = 200}\"/>");
 	        button.DataContext = new Action<string>(p =>
 	        {
 		        counter++;
@@ -326,9 +326,27 @@ namespace EventBinder.Tests
 	        button.RaiseClickEvent();
 	        button.RaiseClickEvent();
 
-	        await Task.Delay(1000);
+	        await Task.Delay(500);
 	        Assert.Equal(1, counter);
 	        Assert.Equal("prm", prm);
+        }
+
+        [WpfFact]
+        public async Task EventBinding_DebouncedUIAction_Executed()
+        {
+	        var executed = false;
+	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke, $0, Debounce = 200}\"/>");
+	        button.DataContext = new Action<object>(async btn =>
+	        {
+                await Task.Delay(1);
+                ((Button)btn).Opacity -= 0.1;
+                executed = true;
+	        });
+
+	        button.RaiseClickEvent();
+
+	        await Task.Delay(500);
+	        Assert.True(executed);
         }
     }
 

@@ -84,7 +84,7 @@ namespace EventBinder
 
 			body.Emit(OpCodes.Ldftn, debouncerModel.Method);
 			body.Emit(OpCodes.Newobj, typeof(TimerCallback).GetConstructors()[0]);
-			body.Emit(OpCodes.Ldnull);
+			body.Emit(OpCodes.Call, typeof(SynchronizationContext).GetProperty(nameof(SynchronizationContext.Current)).GetGetMethod());
 			body.Emit(OpCodes.Ldc_I4, _eventBinding.Debounce.Value);
 			body.Emit(OpCodes.Ldc_I4_M1);
 			body.Emit(OpCodes.Newobj, typeof(Timer).GetConstructor(
@@ -116,6 +116,9 @@ namespace EventBinder
 			var method = nestedTypeBuilder.DefineMethod("Execute", MethodAttributes.Public,
 				typeof(void), new[] { typeof(object) });
 			var methodBody = method.GetILGenerator();
+			methodBody.Emit(OpCodes.Ldarg_1);
+			methodBody.Emit(OpCodes.Castclass, typeof(SynchronizationContext));
+			methodBody.Emit(OpCodes.Call, typeof(SynchronizationContext).GetMethod(nameof(SynchronizationContext.SetSynchronizationContext)));
 			for (var i = 0; i < fields.Length; i++)
 			{
 				methodBody.Emit(OpCodes.Ldarg_0);
