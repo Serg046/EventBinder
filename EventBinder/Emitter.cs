@@ -113,25 +113,48 @@ namespace EventBinder
 				ctorBody.Emit(OpCodes.Stfld, field);
 			}
 			ctorBody.Emit(OpCodes.Ret);
-			var method = nestedTypeBuilder.DefineMethod("Execute", MethodAttributes.Public,
+			var method = GenerateExecutor(nestedTypeBuilder, bindedMethod, fields);
+
+			// Should be pre-created
+			nestedTypeBuilder.CreateType();
+			return new DebouncerModel(ctor, method);
+		}
+
+		private static MethodBuilder GenerateExecutor(TypeBuilder nestedTypeBuilder, MethodInfo bindedMethod, FieldInfo[] fields)
+		{
+			var method = nestedTypeBuilder.DefineMethod("ExecuteUsingContext", MethodAttributes.Public,
 				typeof(void), new[] { typeof(object) });
 			var methodBody = method.GetILGenerator();
 			methodBody.Emit(OpCodes.Ldarg_1);
 			methodBody.Emit(OpCodes.Castclass, typeof(SynchronizationContext));
-			methodBody.Emit(OpCodes.Call, typeof(SynchronizationContext).GetMethod(nameof(SynchronizationContext.SetSynchronizationContext)));
+			methodBody.Emit(OpCodes.Ldarg_0);
+			methodBody.Emit(OpCodes.Ldftn, GenerateExecuteMethod(nestedTypeBuilder, bindedMethod, fields));
+			methodBody.Emit(OpCodes.Newobj, typeof(SendOrPostCallback).GetConstructors()[0]);
+			methodBody.Emit(OpCodes.Ldnull);
+			methodBody.Emit(OpCodes.Callvirt, typeof(SynchronizationContext).GetMethod(nameof(SynchronizationContext.Post)));
+			methodBody.Emit(OpCodes.Ret);
+			return method;
+		}
+
+		private static MethodBuilder GenerateExecuteMethod(TypeBuilder nestedTypeBuilder, MethodInfo bindedMethod, FieldInfo[] fields)
+		{
+			var method = nestedTypeBuilder.DefineMethod("Execute", MethodAttributes.Private,
+				typeof(void), new[] {typeof(object)});
+			var methodBody = method.GetILGenerator();
 			for (var i = 0; i < fields.Length; i++)
 			{
 				methodBody.Emit(OpCodes.Ldarg_0);
 				methodBody.Emit(OpCodes.Ldfld, fields[i]);
 			}
+
 			methodBody.Emit(OpCodes.Callvirt, bindedMethod);
 			if (bindedMethod.ReturnType != typeof(void))
 			{
 				methodBody.Emit(OpCodes.Pop);
 			}
+
 			methodBody.Emit(OpCodes.Ret);
-			nestedTypeBuilder.CreateType();
-			return new DebouncerModel(ctor, method);
+			return method;
 		}
 
 		private MethodInfo GetMethod(ILGenerator body, object instance, string path, Type[] argumentTypes)

@@ -336,6 +336,23 @@ namespace EventBinder.Tests
         {
 	        var executed = false;
 	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke, $0, Debounce = 200}\"/>");
+	        button.DataContext = new Action<object>(btn =>
+	        {
+		        ((Button)btn).Opacity -= 0.1;
+		        executed = true;
+	        });
+
+	        button.RaiseClickEvent();
+
+	        await Task.Delay(500);
+	        Assert.True(executed);
+        }
+
+        [WpfFact]
+        public async Task EventBinding_DebouncedAsyncUIAction_Executed()
+        {
+	        var executed = false;
+	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke, $0, Debounce = 200}\"/>");
 	        button.DataContext = new Action<object>(async btn =>
 	        {
                 await Task.Delay(1);
