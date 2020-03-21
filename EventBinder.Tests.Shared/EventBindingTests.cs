@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Input;
 using Xunit;
+#if AVALONIA
+	using Avalonia.Controls;
+	using EventBinder.Tests.Avalonia;
+	using Avalonia.Interactivity;
+#else
+	using System.Windows;
+	using System.Windows.Controls;
+#endif
 
 namespace EventBinder.Tests
 {
-    public class EventBindingExtensionTests
+    public class EventBindingTests
     {
         [WpfFact]
         public void EventBinding_SimpleAction_Executed()
@@ -27,9 +31,13 @@ namespace EventBinder.Tests
         {
             var executed = false;
             var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
-            button.DataContext = new Action(() => executed = true);
 
+            button.DataContext = new Action(() => executed = true);
+#if AVALONIA
+            button.RaiseDetachedFromVisualTreeEvent();
+#else
             button.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent, button));
+#endif
             button.RaiseClickEvent();
 
             Assert.False(executed);
@@ -143,7 +151,7 @@ namespace EventBinder.Tests
 
             Assert.Equal(button, sender);
             var eArgs = Assert.IsType<RoutedEventArgs>(args);
-            Assert.Equal(ButtonBase.ClickEvent, eArgs.RoutedEvent);
+            Assert.Equal(Button.ClickEvent, eArgs.RoutedEvent);
         }
 
         [WpfFact]
@@ -161,7 +169,7 @@ namespace EventBinder.Tests
             button.RaiseClickEvent();
 
             var eArgs = Assert.IsType<RoutedEventArgs>(args);
-            Assert.Equal(ButtonBase.ClickEvent, eArgs.RoutedEvent);
+            Assert.Equal(Button.ClickEvent, eArgs.RoutedEvent);
             Assert.Equal(7, num);
             Assert.Equal(button, sender);
             Assert.Equal("7", str);
@@ -185,14 +193,10 @@ namespace EventBinder.Tests
         {
             const string expected = "test";
             string str = "-1";
-            var textBox = XamlReader.Parse<TextBox>($"<TextBox Text=\"{expected}\" Name=\"Tbl\" MouseDown=\"{{e:EventBinding Invoke, {{Binding ElementName=Tbl, Path=Text}}}}\"/>");
+            var textBox = XamlReader.Parse<TextBox>($"<TextBox Text=\"{expected}\" Name=\"Tbl\" LostFocus=\"{{e:EventBinding Invoke, {{Binding ElementName=Tbl, Path=Text}}}}\"/>");
             textBox.DataContext = new Action<string>(s => str = s);
 
-			textBox.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left)
-			{
-				RoutedEvent = Mouse.MouseDownEvent,
-				Source = textBox
-			});
+            textBox.RaiseEvent(new RoutedEventArgs(Button.LostFocusEvent));
 
 			Assert.Equal(expected, str);
         }
@@ -215,7 +219,7 @@ namespace EventBinder.Tests
         [WpfFact]
         public void EventBinding_DataContextIsSetBeforeEvaluation_Success()
         {
-	        var stackPanel = XamlReader.Parse<StackPanel>("<StackPanel><StackPanel.DataContext><local:XamlViewModel/></StackPanel.DataContext><StackPanel.Children><Button Click=\"{e:EventBinding Invoke}\"/></StackPanel.Children></StackPanel>");
+	        var stackPanel = XamlReader.Parse<StackPanel>("<StackPanel ><StackPanel.DataContext><local:XamlViewModel/></StackPanel.DataContext><StackPanel.Children><Button Click=\"{e:EventBinding Invoke}\"/></StackPanel.Children></StackPanel>");
 	        var button = stackPanel.Children[0] as Button;
 	        var dataContext = button.DataContext as XamlViewModel;
 
@@ -229,7 +233,7 @@ namespace EventBinder.Tests
         public void EventBinding_SimpleActionViaCSharp_Executed()
         {
 	        var executed = false;
-	        var button = XamlReader.Parse<Button>("<Button/>");
+	        var button = XamlReader.Parse<Button>("<Button />");
 	        button.DataContext = new Action(() => executed = true);
             EventBinding.Bind(button, "Click", "Invoke");
 

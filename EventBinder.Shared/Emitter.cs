@@ -4,9 +4,17 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using System.Threading;
-using System.Windows;
-using System.Windows.Data;
-using System.Windows.Media;
+#if AVALONIA
+	using Avalonia.Controls;
+using Avalonia.Data;
+using XamlControlBase = Avalonia.IStyledElement;
+	using XamlControl = Avalonia.Visual;
+	using XamlBinding = Avalonia.Data.Binding;
+#else
+	using XamlControlBase = System.Windows.DependencyObject;
+	using XamlControl = System.Windows.FrameworkElement;
+	using XamlBinding = System.Windows.Data.Binding;
+#endif
 
 namespace EventBinder
 {
@@ -16,13 +24,13 @@ namespace EventBinder
 
         private readonly TypeBuilder _typeBuilder;
 		private readonly EventBinding _eventBinding;
-		private readonly FrameworkElement _source;
+		private readonly XamlControl _source;
 		private readonly FieldInfo _instanceField;
 		private readonly FieldInfo _argumentsField;
 		private readonly FieldInfo _timerField;
 		private static readonly DependencyPropertyCollection _properties = new DependencyPropertyCollection("Argument");
 
-		public Emitter(TypeBuilder typeBuilder, EventBinding eventBinding, FrameworkElement source)
+		public Emitter(TypeBuilder typeBuilder, EventBinding eventBinding, XamlControl source)
 		{
 			_typeBuilder = typeBuilder;
 			_eventBinding = eventBinding;
@@ -39,7 +47,7 @@ namespace EventBinder
 			var body = method.GetILGenerator();
 			body.Emit(OpCodes.Ldarg_0);
 			body.Emit(OpCodes.Ldfld, _instanceField);
-			var dataContextProp = _source.GetType().GetProperty(nameof(FrameworkElement.DataContext));
+			var dataContextProp = _source.GetType().GetProperty(nameof(XamlControl.DataContext));
 			body.Emit(OpCodes.Call, dataContextProp.GetGetMethod());
 			var resolvedArguments = EmitArguments(arguments, parameterTypes);
 			var innerMethod = GetMethod(body, _source.DataContext, _eventBinding.MethodPath, resolvedArguments.Types);
@@ -203,7 +211,7 @@ namespace EventBinder
 				{
 					argumentType = HandleArg(opCodes, i, argument);
 				}
-				if (argument is Binding binding)
+				if (argument is XamlBinding binding)
 				{
 					argumentType = HandleBindingArg(binding, opCodes, i);
 				}
@@ -239,7 +247,7 @@ namespace EventBinder
 			return argumentType;
 		}
 
-		private Type HandleBindingArg(Binding binding, ICollection<Action<ILGenerator>> opCodes, int position)
+		private Type HandleBindingArg(XamlBinding binding, ICollection<Action<ILGenerator>> opCodes, int position)
 		{
 			var argType = GetArgType(binding);
 			opCodes.Add(b => b.Emit(OpCodes.Ldarg_0));
@@ -254,7 +262,7 @@ namespace EventBinder
 			return argType;
 		}
 
-		private Type GetArgType(Binding binding)
+		private Type GetArgType(XamlBinding binding)
 		{
 			object context;
 			if (string.IsNullOrEmpty(binding.ElementName))
@@ -263,11 +271,20 @@ namespace EventBinder
 			}
 			else
             {
-                var root = Window.GetWindow(_source) ?? (FrameworkElement)GetRootParent(_source);
-				context = root.FindName(binding.ElementName) as DependencyObject;
-			}
+#if AVALONIA
+	            var root = GetRootParent(_source) as IControl;
+	            context = root.FindControl<IControl>(binding.ElementName);
+#else
+				var root = System.Windows.Window.GetWindow(_source) ?? (XamlControl)GetRootParent(_source);
+				context = root.FindName(binding.ElementName) as System.Windows.DependencyObject;
+#endif
+            }
 
+#if AVALONIA
+			var path = binding.Path;
+#else
 			var path = binding.Path?.Path;
+#endif
 			return string.IsNullOrEmpty(path) || path == "."
 				? context.GetType()
 				: GetArgType(context, path);
@@ -287,12 +304,17 @@ namespace EventBinder
 			return type.GetProperty(path)?.PropertyType ?? type.GetField(path)?.FieldType;
 		}
 
-		internal static object ResolveBinding(Binding binding, FrameworkElement source, int position)
+		internal static object ResolveBinding(XamlBinding binding, XamlControl source, int position)
 		{
-			if (!BindingOperations.IsDataBound(source, _properties[position]))
+#if AVALONIA
+			var instancedBinding = binding.Initiate(source, _properties[position]);
+			BindingOperations.Apply(source, _properties[position], instancedBinding, null);
+#else
+			if (!System.Windows.Data.BindingOperations.IsDataBound(source, _properties[position]))
 			{
-				BindingOperations.SetBinding(source, _properties[position], binding);
+				System.Windows.Data.BindingOperations.SetBinding(source, _properties[position], binding);
 			}
+#endif
 			return source.GetValue(_properties[position]);
 		}
 
@@ -327,9 +349,13 @@ namespace EventBinder
 			throw new MissingMethodException(sb.ToString());
 		}
 
-		private DependencyObject GetRootParent(DependencyObject obj)
+		private XamlControlBase GetRootParent(XamlControlBase obj)
 		{
-			var parent = VisualTreeHelper.GetParent(obj);
+#if AVALONIA
+			var parent = obj.Parent;
+#else
+			var parent = System.Windows.Media.VisualTreeHelper.GetParent(obj);
+#endif
 			return parent != null ? GetRootParent(parent) : obj;
 		}
 

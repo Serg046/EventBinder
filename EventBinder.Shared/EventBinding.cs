@@ -1,12 +1,19 @@
 ﻿using System;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Windows;
-using System.Windows.Markup;
+#if AVALONIA
+	using XamlMarkupExtension = Avalonia.Markup.Xaml.MarkupExtension;
+	using IXamlProvideValueTarget = Avalonia.Markup.Xaml.IProvideValueTarget;
+	using XamlControl = Avalonia.Visual;
+#else
+	using XamlMarkupExtension = System.Windows.Markup.MarkupExtension;
+	using IXamlProvideValueTarget = System.Windows.Markup.IProvideValueTarget;
+	using XamlControl = System.Windows.FrameworkElement;
+#endif
 
 namespace EventBinder
 {
-    public class EventBinding : MarkupExtension
+    public class EventBinding : XamlMarkupExtension
     {
         public const string ASSEMBLY_NAME = "EventBinder.EventHandler";
         private static readonly EventHandlerGenerator _eventHandlerGenerator;
@@ -29,13 +36,22 @@ namespace EventBinder
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             if (serviceProvider == null) return this;
-            var target = (IProvideValueTarget)serviceProvider.GetService(typeof(IProvideValueTarget));
-            var frameworkElement = target.TargetObject as FrameworkElement ?? throw new InvalidOperationException("Only FrameworkElements are supported");
+            var target = (IXamlProvideValueTarget)serviceProvider.GetService(typeof(IXamlProvideValueTarget));
+            var frameworkElement = target.TargetObject as XamlControl ?? throw new InvalidOperationException("Only FrameworkElements are supported");
+#if AVALONIA
+	        EventInfo eventInfo = null;
+	        if (target.TargetProperty is string eventName)
+	        {
+		        eventInfo = frameworkElement.GetType().GetEvent(eventName);
+	        }
+            if (eventInfo == null) throw new InvalidOperationException("Only events are supported");
+#else
             var eventInfo = target.TargetProperty as EventInfo ?? throw new InvalidOperationException("Only events are supported");
+#endif       
             return Bind(frameworkElement, eventInfo);
         }
 
-        public static void Bind(FrameworkElement frameworkElement, string eventName, string methodPath, params object[] arguments)
+        public static void Bind(XamlControl frameworkElement, string eventName, string methodPath, params object[] arguments)
         {
 	        var eventInfo = frameworkElement.GetType().GetEvent(eventName) ?? throw new MissingFieldException($"Cannot find \"{eventName}\" event");
 	        var binding = new EventBinding(methodPath, arguments);
@@ -43,7 +59,7 @@ namespace EventBinder
 		    eventInfo.AddEventHandler(frameworkElement, handler);
         }
 
-        private Delegate Bind(FrameworkElement frameworkElement, EventInfo eventInfo)
+        private Delegate Bind(XamlControl frameworkElement, EventInfo eventInfo)
         {
             var parameters = eventInfo.EventHandlerType.GetMethod("Invoke").GetParameters();
 	        var parameterTypes = new Type[parameters.Length];
@@ -61,8 +77,12 @@ namespace EventBinder
 		        handler = _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement);
 		        eventInfo.AddEventHandler(frameworkElement, handler);
 	        };
-	        frameworkElement.Unloaded += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);
-	        return handler;
+#if AVALONIA
+            frameworkElement.DetachedFromVisualTree += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);
+#else
+            frameworkElement.Unloaded += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);
+#endif
+            return handler;
         }
 
         private EventBinding(string methodPath, object[] arguments)

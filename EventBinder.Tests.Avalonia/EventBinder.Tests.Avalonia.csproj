@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFrameworks>net4.8;netcoreapp3.1</TargetFrameworks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWPF>true</UseWPF>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Moq">
       <Version>4.13.1</Version>
@@ -14,12 +14,16 @@
     <PackageReference Include="xunit.runner.visualstudio">
       <Version>2.4.1</Version>
     </PackageReference>
-    <PackageReference Include="Xunit.StaFact">
-      <Version>0.3.18</Version>
-    </PackageReference>
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\EventBinder\EventBinder.csproj" />
+    <ProjectReference Include="..\EventBinder.Avalonia\EventBinder.Avalonia.csproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);AVALONIA</DefineConstants>
+  </PropertyGroup>
+
   <Import Project="..\EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems" Label="Shared" />
+
 </Project>

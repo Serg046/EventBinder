@@ -4,7 +4,11 @@ using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-using System.Windows;
+#if AVALONIA
+	using XamlControl = Avalonia.Visual;
+#else
+	using XamlControl = System.Windows.FrameworkElement;
+#endif
 
 namespace EventBinder
 {
@@ -28,7 +32,7 @@ namespace EventBinder
             return handler;
         }
 
-        public Delegate GenerateHandler(Type eventHandler, EventBinding binding, FrameworkElement source)
+        public Delegate GenerateHandler(Type eventHandler, EventBinding binding, XamlControl source)
         {
             var parameterTypes = GetParameterTypes(eventHandler);
             var arguments = ResolveArguments(binding.Arguments);

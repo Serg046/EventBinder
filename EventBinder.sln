@@ -3,13 +3,27 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29509.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBinder", "EventBinder\EventBinder.csproj", "{539E63FF-327C-4A83-84F2-784C35152E31}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder", "EventBinder\EventBinder.csproj", "{539E63FF-327C-4A83-84F2-784C35152E31}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBinder.Tests", "EventBinder.Tests\EventBinder.Tests.csproj", "{55B6A5AC-C44E-4417-BE23-1D1D36261CC8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder.Tests", "EventBinder.Tests\EventBinder.Tests.csproj", "{55B6A5AC-C44E-4417-BE23-1D1D36261CC8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBinder.PerformanceTests", "EventBinder.PerformanceTests\EventBinder.PerformanceTests.csproj", "{34835503-2361-4F26-8359-65475C40FA15}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder.PerformanceTests", "EventBinder.PerformanceTests\EventBinder.PerformanceTests.csproj", "{34835503-2361-4F26-8359-65475C40FA15}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBinder.Avalonia", "EventBinder.Avalonia\EventBinder.Avalonia.csproj", "{A91392B5-AD3C-48DE-8B5F-81E5AB8F7365}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{7333F819-46C1-4BC7-935F-F3D47AB726FD}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "EventBinder.Shared", "EventBinder.Shared\EventBinder.Shared.shproj", "{04312571-CC13-49EB-AA0C-29AEFD29F3E5}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "EventBinder.Tests.Shared", "EventBinder.Tests.Shared\EventBinder.Tests.Shared.shproj", "{CB7008B8-F11C-4FD4-ABA0-3E79A47EECD5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBinder.Tests.Avalonia", "EventBinder.Tests.Avalonia\EventBinder.Tests.Avalonia.csproj", "{E679C216-7711-4529-8AAD-AE5D95E84F6E}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		EventBinder.Shared\EventBinder.Shared.projitems*{04312571-cc13-49eb-aa0c-29aefd29f3e5}*SharedItemsImports = 13
+		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{cb7008b8-f11c-4fd4-aba0-3e79a47eecd5}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -27,9 +41,23 @@ Global
 		{34835503-2361-4F26-8359-65475C40FA15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{34835503-2361-4F26-8359-65475C40FA15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{34835503-2361-4F26-8359-65475C40FA15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A91392B5-AD3C-48DE-8B5F-81E5AB8F7365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A91392B5-AD3C-48DE-8B5F-81E5AB8F7365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A91392B5-AD3C-48DE-8B5F-81E5AB8F7365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A91392B5-AD3C-48DE-8B5F-81E5AB8F7365}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E679C216-7711-4529-8AAD-AE5D95E84F6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E679C216-7711-4529-8AAD-AE5D95E84F6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E679C216-7711-4529-8AAD-AE5D95E84F6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E679C216-7711-4529-8AAD-AE5D95E84F6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{55B6A5AC-C44E-4417-BE23-1D1D36261CC8} = {7333F819-46C1-4BC7-935F-F3D47AB726FD}
+		{34835503-2361-4F26-8359-65475C40FA15} = {7333F819-46C1-4BC7-935F-F3D47AB726FD}
+		{CB7008B8-F11C-4FD4-ABA0-3E79A47EECD5} = {7333F819-46C1-4BC7-935F-F3D47AB726FD}
+		{E679C216-7711-4529-8AAD-AE5D95E84F6E} = {7333F819-46C1-4BC7-935F-F3D47AB726FD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C29190A6-E39B-405B-BE25-0B8408DAC041}
