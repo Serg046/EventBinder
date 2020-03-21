@@ -2,7 +2,9 @@
 
 Do you want to bind your action to any event without ugly EventTrigger, custom UI controls, huge mvvm frameworks, etc? Try `EventBinding` which will allow you to bind your method directly to any event, including your own events, without a need to wrap the method in ICommand container.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/2k5lfrim0dxbekuy?svg=true)](https://ci.appveyor.com/project/Serg046/eventbinder) [![NuGet version](https://badge.fury.io/nu/EventBinder.svg)](https://www.nuget.org/packages/EventBinder) [![.NET Framework 3](https://img.shields.io/badge/.NET%20%20Framework%203%20+-supported-4CC61E)](https://www.nuget.org/packages/EventBinder) [![.NET Core 3](https://img.shields.io/badge/.NET%20%20Core%203%20+-supported-4CC61E)](https://www.nuget.org/packages/EventBinder)
+[![EventBinder](https://img.shields.io/badge/EventBinder-WPF-brightgreen)](https://www.nuget.org/packages/EventBinder) [![Build status](https://ci.appveyor.com/api/projects/status/2k5lfrim0dxbekuy?svg=true)](https://ci.appveyor.com/project/Serg046/eventbinder) [![NuGet version](https://badge.fury.io/nu/EventBinder.svg)](https://www.nuget.org/packages/EventBinder) [![.NET Framework 3](https://img.shields.io/badge/.NET%20%20Framework-3+-brightgreen)](https://www.nuget.org/packages/EventBinder) [![.NET Core 3](https://img.shields.io/badge/.NET%20%20Core-3+-brightgreen)](https://www.nuget.org/packages/EventBinder)
+
+[![EventBinder.Avalonia](https://img.shields.io/badge/EventBinder-Avalonia-brightgreen)](https://www.nuget.org/packages/EventBinder.Avalonia) [![Build status](https://ci.appveyor.com/api/projects/status/2k5lfrim0dxbekuy?svg=true)](https://ci.appveyor.com/project/Serg046/eventbinder) [![NuGet version](https://badge.fury.io/nu/EventBinder.Avalonia.svg)](https://www.nuget.org/packages/EventBinder.Avalonia) [![.NET Core 2](https://img.shields.io/badge/.NET%20%20Core-2+-brightgreen)](https://www.nuget.org/packages/EventBinder.Avalonia) [![Avalonia 0.9.0](https://img.shields.io/badge/Avalonia-0.9.0+-brightgreen)](https://www.nuget.org/packages/EventBinder.Avalonia)
 
 ## Getting started
 
