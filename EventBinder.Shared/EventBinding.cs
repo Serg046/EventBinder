@@ -79,8 +79,10 @@ namespace EventBinder
 	        };
 #if AVALONIA
             frameworkElement.DetachedFromVisualTree += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);
+            frameworkElement.AttachedToVisualTree += (sender, e) => eventInfo.AddEventHandler(frameworkElement, handler);
 #else
             frameworkElement.Unloaded += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);
+            frameworkElement.Loaded += (sender, e) => eventInfo.AddEventHandler(frameworkElement, handler);
 #endif
             return handler;
         }

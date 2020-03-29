@@ -44,6 +44,25 @@ namespace EventBinder.Tests
         }
 
         [WpfFact]
+        public void EventBinding_ReloadedButton_StillWorks()
+        {
+	        var executed = false;
+	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
+
+	        button.DataContext = new Action(() => executed = true);
+#if AVALONIA
+            button.RaiseDetachedFromVisualTreeEvent();
+            button.RaiseAttachedToVisualTreeEvent();
+#else
+            button.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent, button));
+	        button.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent, button));
+#endif
+	        button.RaiseClickEvent();
+
+	        Assert.True(executed);
+        }
+
+        [WpfFact]
         public void EventBinding_TwoDataContexts_TheLastExecuted()
         {
             var executed = false;

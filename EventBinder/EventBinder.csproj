@@ -3,7 +3,7 @@
     <TargetFrameworks>net30;netcoreapp3.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWPF>true</UseWPF>
-    <Version>2.4.0.0</Version>
+    <Version>2.4.1.0</Version>
     <Authors>Sergey Aseev (Serg046)</Authors>
     <PackageProjectUrl>https://github.com/Serg046/EventBinder</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Serg046/EventBinder</RepositoryUrl>

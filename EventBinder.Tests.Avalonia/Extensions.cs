@@ -20,5 +20,13 @@ namespace EventBinder.Tests.Avalonia
 		        BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.InvokeMethod,
 		        null, element, new object[] {visualTreeAttachmentEventArgs}, null);
         }
+
+        public static void RaiseAttachedToVisualTreeEvent(this IVisual element)
+        {
+	        var visualTreeAttachmentEventArgs = new VisualTreeAttachmentEventArgs(element, Mock.Of<IRenderRoot>());
+	        element.GetType().InvokeMember("OnAttachedToVisualTreeCore",
+		        BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.InvokeMethod,
+		        null, element, new object[] { visualTreeAttachmentEventArgs }, null);
+        }
     }
 }
