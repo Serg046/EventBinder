@@ -14,10 +14,10 @@ Just install the nuget package. If it does not work and you get XamlParseExcepti
 - Binding to methods without ICommand
 - Binding to methods with return types
 - Binding to async methods
-- Binding to nested objects using `.` delimiter, properties and fields are supported
+- Binding to nested objects using `.` delimiter (properties and fields are supported)
 - Passing user parameters of int, double, decimal or string type
 - Passing event parameters using `$` sign and position number (`$0`, `$1`, etc)
-- Passing default `{Binding}` as a parameter
+- Passing the current `{Binding}` as a parameter
 
 You can find most of the features in the example below:
 ```csharp
