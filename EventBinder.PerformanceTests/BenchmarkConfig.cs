@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Columns;
+﻿using System;
+using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Loggers;
 
@@ -8,8 +9,8 @@ namespace EventBinder.PerformanceTests
 	{
 		public BenchmarkConfig()
 		{
-			Add(new Logger());
-			Add(DefaultColumnProviders.Instance);
+			AddLogger(new Logger());
+			AddColumnProvider(DefaultColumnProviders.Instance);
 		}
 
 		private class Logger : ILogger
@@ -34,6 +35,8 @@ namespace EventBinder.PerformanceTests
 
 			public void WriteLine() => ConsoleLogger.Default.WriteLine();
 			public void Flush() => ConsoleLogger.Default.Flush();
+			public string Id { get; } = Guid.NewGuid().ToString();
+			public int Priority { get; } = 0;
 		}
 	}
 }

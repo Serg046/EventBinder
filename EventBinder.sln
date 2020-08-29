@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder.Tests", "EventB
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder.PerformanceTests", "EventBinder.PerformanceTests\EventBinder.PerformanceTests.csproj", "{34835503-2361-4F26-8359-65475C40FA15}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBinder.Avalonia", "EventBinder.Avalonia\EventBinder.Avalonia.csproj", "{A91392B5-AD3C-48DE-8B5F-81E5AB8F7365}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder.Avalonia", "EventBinder.Avalonia\EventBinder.Avalonia.csproj", "{A91392B5-AD3C-48DE-8B5F-81E5AB8F7365}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{7333F819-46C1-4BC7-935F-F3D47AB726FD}"
 EndProject
@@ -17,12 +17,16 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "EventBinder.Shared", "Event
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "EventBinder.Tests.Shared", "EventBinder.Tests.Shared\EventBinder.Tests.Shared.shproj", "{CB7008B8-F11C-4FD4-ABA0-3E79A47EECD5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBinder.Tests.Avalonia", "EventBinder.Tests.Avalonia\EventBinder.Tests.Avalonia.csproj", "{E679C216-7711-4529-8AAD-AE5D95E84F6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder.Tests.Avalonia", "EventBinder.Tests.Avalonia\EventBinder.Tests.Avalonia.csproj", "{E679C216-7711-4529-8AAD-AE5D95E84F6E}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		EventBinder.Shared\EventBinder.Shared.projitems*{04312571-cc13-49eb-aa0c-29aefd29f3e5}*SharedItemsImports = 13
+		EventBinder.Shared\EventBinder.Shared.projitems*{539e63ff-327c-4a83-84f2-784c35152e31}*SharedItemsImports = 5
+		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{55b6a5ac-c44e-4417-be23-1d1d36261cc8}*SharedItemsImports = 5
+		EventBinder.Shared\EventBinder.Shared.projitems*{a91392b5-ad3c-48de-8b5f-81e5ab8f7365}*SharedItemsImports = 5
 		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{cb7008b8-f11c-4fd4-aba0-3e79a47eecd5}*SharedItemsImports = 13
+		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{e679c216-7711-4529-8aad-ae5d95e84f6e}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
