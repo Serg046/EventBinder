@@ -15,7 +15,7 @@
       <Version>2.4.3</Version>
     </PackageReference>
     <PackageReference Include="Xunit.StaFact">
-      <Version>0.3.18</Version>
+      <Version>1.0.37</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
