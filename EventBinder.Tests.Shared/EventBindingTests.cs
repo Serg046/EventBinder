@@ -7,7 +7,7 @@ using Xunit;
 	using EventBinder.Tests.Avalonia;
 	using Avalonia.Interactivity;
 #else
-	using System.Windows.Interop;
+using System.Windows.Interop;
 	using System.Windows;
 	using System.Windows.Controls;
 #endif
@@ -26,6 +26,18 @@ namespace EventBinder.Tests
             button.RaiseClickEvent();
 
             Assert.True(executed);
+        }
+
+        [WpfFact]
+        public void EventBinding_SimpleAction_ExecutedOneTime()
+        {
+	        var number = 0;
+	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
+	        button.DataContext = new Action(() => number++);
+
+	        button.RaiseClickEvent();
+
+	        Assert.Equal(1, number);
         }
 
         [WpfFact]
@@ -407,6 +419,19 @@ namespace EventBinder.Tests
 
 			Assert.True(executed);
         }
+
+	    [WpfFact]
+	    public void EventBinding_DataContextBeforeIsLoaded_BindedOneTime()
+	    {
+		    var number = 0;
+		    var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
+		    button.DataContext = new Action(() => number++);
+
+            button.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent, button));
+            button.RaiseClickEvent();
+
+            Assert.Equal(1, number);
+	    }
 #endif
     }
 

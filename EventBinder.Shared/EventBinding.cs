@@ -92,18 +92,42 @@ namespace EventBinder
 	        var handler = frameworkElement.DataContext != null
 		        ? _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement)
 		        : _eventHandlerGenerator.GenerateEmptyHandler(eventInfo.EventHandlerType);
+	        var binded = false;
+	        var sync = new object();
 	        frameworkElement.DataContextChanged += (sender, e) =>
 	        {
-		        eventInfo.RemoveEventHandler(frameworkElement, handler);
-		        handler = _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement);
-		        eventInfo.AddEventHandler(frameworkElement, handler);
+                lock (sync)
+		        {
+			        eventInfo.RemoveEventHandler(frameworkElement, handler);
+			        handler = _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this,
+				        frameworkElement);
+			        eventInfo.AddEventHandler(frameworkElement, handler);
+			        binded = true;
+		        }
 	        };
 #if AVALONIA
             frameworkElement.DetachedFromVisualTree += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);
             frameworkElement.AttachedToVisualTree += (sender, e) => eventInfo.AddEventHandler(frameworkElement, handler);
 #else
-            frameworkElement.Unloaded += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);
-            frameworkElement.Loaded += (sender, e) => eventInfo.AddEventHandler(frameworkElement, handler);
+            frameworkElement.Unloaded += (sender, e) =>
+            {
+	            lock (sync)
+	            {
+                    eventInfo.RemoveEventHandler(frameworkElement, handler);
+			        binded = false;
+                }
+            };
+            frameworkElement.Loaded += (sender, e) =>
+            {
+	            lock (sync)
+	            {
+		            if (!binded)
+		            {
+			            eventInfo.AddEventHandler(frameworkElement, handler);
+			            binded = true;
+		            }
+	            }
+            };
 #endif
             return handler;
         }
