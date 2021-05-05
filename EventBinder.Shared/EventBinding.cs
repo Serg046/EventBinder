@@ -46,9 +46,30 @@ namespace EventBinder
 	        }
             if (eventInfo == null) throw new InvalidOperationException("Only events are supported");
 #else
-            var eventInfo = target.TargetProperty as EventInfo ?? throw new InvalidOperationException("Only events are supported");
+            var eventInfo = target.TargetProperty as EventInfo
+                            ?? TryDetermineEventInfo(serviceProvider, frameworkElement)
+                            ?? throw new InvalidOperationException("Only events are supported");
 #endif       
             return Bind(frameworkElement, eventInfo);
+        }
+
+        private EventInfo TryDetermineEventInfo(IServiceProvider serviceProvider, XamlControl frameworkElement)
+        {
+            var xamlContextField = serviceProvider.GetType().GetField("_xamlContext", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (xamlContextField != null)
+            {
+	            var xamlContext = xamlContextField.GetValue(serviceProvider);
+	            var parentPropertyProp = xamlContext.GetType().GetProperty("ParentProperty");
+	            var parentProperty = parentPropertyProp?.GetValue(xamlContext, null);
+	            var nameProp = parentProperty?.GetType().GetProperty("Name");
+	            if (nameProp != null)
+	            {
+		            var name = nameProp.GetValue(parentProperty, null).ToString();
+		            return frameworkElement.GetType().GetEvent(name);
+	            }
+            }
+
+            return null;
         }
 
         public static void Bind(XamlControl frameworkElement, string eventName, string methodPath, params object[] arguments)

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Xunit;
 #if AVALONIA
 	using Avalonia.Controls;
 	using EventBinder.Tests.Avalonia;
 	using Avalonia.Interactivity;
 #else
+	using System.Windows.Interop;
 	using System.Windows;
 	using System.Windows.Controls;
 #endif
@@ -388,6 +390,24 @@ namespace EventBinder.Tests
 	        await Task.Delay(500);
 	        Assert.True(executed);
         }
+
+#if !AVALONIA
+        [WpfFact]
+        public void EventBinding_KeyDown_Executed()
+        {
+	        var executed = false;
+	        var button = XamlReader.Parse<Button>("<Button PreviewKeyDown=\"{e:EventBinding Invoke}\"/>");
+	        button.DataContext = new Action(() => executed = true);
+
+            button.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice,
+				new HwndSource(0, 0, 0, 0, 0, "", IntPtr.Zero), 0, Key.Enter)
+            {
+                RoutedEvent = Keyboard.PreviewKeyDownEvent
+            });
+
+			Assert.True(executed);
+        }
+#endif
     }
 
     public class XamlViewModel
