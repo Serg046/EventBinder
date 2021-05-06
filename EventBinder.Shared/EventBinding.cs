@@ -89,25 +89,36 @@ namespace EventBinder
 		        parameterTypes[i] = parameters[i].ParameterType;
 	        }
 
-	        var handler = frameworkElement.DataContext != null
-		        ? _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement)
-		        : _eventHandlerGenerator.GenerateEmptyHandler(eventInfo.EventHandlerType);
-	        var binded = false;
+	        var handler = GenerateHandler(frameworkElement, eventInfo);
 	        var sync = new object();
-	        frameworkElement.DataContextChanged += (sender, e) =>
+	        var binded = false;
+            frameworkElement.DataContextChanged += (sender, e) =>
 	        {
                 lock (sync)
 		        {
 			        eventInfo.RemoveEventHandler(frameworkElement, handler);
-			        handler = _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this,
-				        frameworkElement);
-			        eventInfo.AddEventHandler(frameworkElement, handler);
+			        handler = GenerateHandler(frameworkElement, eventInfo);
+                    eventInfo.AddEventHandler(frameworkElement, handler);
 			        binded = true;
 		        }
 	        };
 #if AVALONIA
-            frameworkElement.DetachedFromVisualTree += (sender, e) => eventInfo.RemoveEventHandler(frameworkElement, handler);
-            frameworkElement.AttachedToVisualTree += (sender, e) => eventInfo.AddEventHandler(frameworkElement, handler);
+            frameworkElement.DetachedFromVisualTree += (sender, e) =>
+            {
+	            lock (sync)
+	            {
+                    eventInfo.RemoveEventHandler(frameworkElement, handler);
+                    binded = false;
+	            }
+            };
+            frameworkElement.AttachedToVisualTree += (sender, e) =>
+            {
+	            lock (sync)
+	            {
+                    eventInfo.AddEventHandler(frameworkElement, handler);
+			        binded = true;
+                }
+            };
 #else
             frameworkElement.Unloaded += (sender, e) =>
             {
@@ -130,6 +141,13 @@ namespace EventBinder
             };
 #endif
             return handler;
+        }
+
+        private Delegate GenerateHandler(XamlControl frameworkElement, EventInfo eventInfo)
+        {
+	        return frameworkElement.DataContext != null
+		        ? _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement)
+		        : _eventHandlerGenerator.GenerateEmptyHandler(eventInfo.EventHandlerType);
         }
 
         private EventBinding(string methodPath, object[] arguments)

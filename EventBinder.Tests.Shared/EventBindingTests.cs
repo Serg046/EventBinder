@@ -77,16 +77,25 @@ namespace EventBinder.Tests
         }
 
         [WpfFact]
-        public void EventBinding_TwoDataContexts_TheLastExecuted()
+        public void EventBinding_TwoDataContexts_TheFirstReplaced()
         {
-            var executed = false;
-            var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
-            button.DataContext = new Action(() => executed = false);
-            button.DataContext = new Action(() => executed = true);
+	        var executed1 = false;
+	        var executed2 = false;
+	        var button = XamlReader.Parse<Button>("<Button Click=\"{e:EventBinding Invoke}\"/>");
+	        button.DataContext = new Action(() => executed1 = true);
+
+	        button.RaiseClickEvent();
+	        Assert.True(executed1);
+	        Assert.False(executed2);
+
+            //--
+
+            executed1 = executed2 = false;
+            button.DataContext = new Action(() => executed2 = true);
 
             button.RaiseClickEvent();
-
-            Assert.True(executed);
+            Assert.False(executed1);
+            Assert.True(executed2);
         }
 
         [WpfFact]
