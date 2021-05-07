@@ -2,19 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Version>2.5.0</Version>
-    <Authors>Sergey Aseev (Serg046)</Authors>
-    <PackageProjectUrl>https://github.com/Serg046/EventBinder</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/Serg046/EventBinder</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>Avalonia EventBinding Binding Event Method EventToMethod MethodToEvent EventTrigger ViewModel</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.9.12" />
   </ItemGroup>
 
+  <Import Project="..\EventBinder.Metadata.props" />
   <Import Project="..\EventBinder.Shared\EventBinder.Shared.projitems" Label="Shared" />
 
   <PropertyGroup>

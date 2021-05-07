@@ -1,0 +1,12 @@
+﻿<Project>
+  <PropertyGroup>
+    <UseWPF>true</UseWPF>
+    <Version>2.5.0.1</Version>
+    <Description>Allows binding a method to any WPF/Avalonia event</Description>
+    <Authors>Sergey Aseev (Serg046)</Authors>
+    <PackageProjectUrl>https://github.com/Serg046/EventBinder</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Serg046/EventBinder</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>EventBinding Binding Event Method EventToMethod MethodToEvent EventTrigger ViewModel</PackageTags>
+  </PropertyGroup>
+</Project>
