@@ -8,5 +8,3 @@ updates:
   open-pull-requests-limit: 10
   ignore:
   - dependency-name: Avalonia
-    versions:
-    - 0.10.0
