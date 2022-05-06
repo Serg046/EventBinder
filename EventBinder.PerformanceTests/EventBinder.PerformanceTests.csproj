@@ -13,7 +13,7 @@
       <Version>2.4.1</Version>
     </PackageReference>
     <PackageReference Include="xunit.runner.visualstudio">
-      <Version>2.4.3</Version>
+      <Version>2.4.5</Version>
     </PackageReference>
     <PackageReference Include="BenchmarkDotNet">
       <Version>0.13.1</Version>
