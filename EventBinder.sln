@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29509.3
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder", "EventBinder\EventBinder.csproj", "{539E63FF-327C-4A83-84F2-784C35152E31}"
 EndProject
@@ -24,15 +24,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		EventBinder.Metadata.props = EventBinder.Metadata.props
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventBinder.AvaloniaPreview", "EventBinder.AvaloniaPreview\EventBinder.AvaloniaPreview.csproj", "{3964FB3A-98D9-43F0-8443-20E3C5A61497}"
+EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		EventBinder.Shared\EventBinder.Shared.projitems*{04312571-cc13-49eb-aa0c-29aefd29f3e5}*SharedItemsImports = 13
-		EventBinder.Shared\EventBinder.Shared.projitems*{539e63ff-327c-4a83-84f2-784c35152e31}*SharedItemsImports = 5
-		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{55b6a5ac-c44e-4417-be23-1d1d36261cc8}*SharedItemsImports = 5
-		EventBinder.Shared\EventBinder.Shared.projitems*{a91392b5-ad3c-48de-8b5f-81e5ab8f7365}*SharedItemsImports = 5
-		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{cb7008b8-f11c-4fd4-aba0-3e79a47eecd5}*SharedItemsImports = 13
-		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{e679c216-7711-4529-8aad-ae5d95e84f6e}*SharedItemsImports = 5
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -58,6 +52,10 @@ Global
 		{E679C216-7711-4529-8AAD-AE5D95E84F6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E679C216-7711-4529-8AAD-AE5D95E84F6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E679C216-7711-4529-8AAD-AE5D95E84F6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3964FB3A-98D9-43F0-8443-20E3C5A61497}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3964FB3A-98D9-43F0-8443-20E3C5A61497}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3964FB3A-98D9-43F0-8443-20E3C5A61497}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3964FB3A-98D9-43F0-8443-20E3C5A61497}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,5 +68,14 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C29190A6-E39B-405B-BE25-0B8408DAC041}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		EventBinder.Shared\EventBinder.Shared.projitems*{04312571-cc13-49eb-aa0c-29aefd29f3e5}*SharedItemsImports = 13
+		EventBinder.Shared\EventBinder.Shared.projitems*{3964fb3a-98d9-43f0-8443-20e3c5a61497}*SharedItemsImports = 5
+		EventBinder.Shared\EventBinder.Shared.projitems*{539e63ff-327c-4a83-84f2-784c35152e31}*SharedItemsImports = 5
+		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{55b6a5ac-c44e-4417-be23-1d1d36261cc8}*SharedItemsImports = 5
+		EventBinder.Shared\EventBinder.Shared.projitems*{a91392b5-ad3c-48de-8b5f-81e5ab8f7365}*SharedItemsImports = 5
+		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{cb7008b8-f11c-4fd4-aba0-3e79a47eecd5}*SharedItemsImports = 13
+		EventBinder.Tests.Shared\EventBinder.Tests.Shared.projitems*{e679c216-7711-4529-8aad-ae5d95e84f6e}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

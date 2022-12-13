@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.0.0-preview1" />
+  </ItemGroup>
+
+  <Import Project="..\EventBinder.Metadata.props" />
+  <Import Project="..\EventBinder.Shared\EventBinder.Shared.projitems" Label="Shared" />
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);AVALONIA</DefineConstants>
+	<Version>$(Version)-preview</Version>
+  </PropertyGroup>
+
+</Project>
