@@ -6,7 +6,7 @@ Do you want to bind your action to any event without ugly EventTrigger, custom U
 [![EventBinder.Avalonia](https://img.shields.io/badge/EventBinder-Avalonia-brightgreen)](https://www.nuget.org/packages/EventBinder.Avalonia) [![Build status](https://ci.appveyor.com/api/projects/status/2k5lfrim0dxbekuy?svg=true)](https://ci.appveyor.com/project/Serg046/eventbinder) [![NuGet version](https://badge.fury.io/nu/EventBinder.Avalonia.svg)](https://www.nuget.org/packages/EventBinder.Avalonia) [![.NET Core 2](https://img.shields.io/badge/.NET%20%20Core-2+-brightgreen)](https://www.nuget.org/packages/EventBinder.Avalonia) [![Avalonia 0.9.0](https://img.shields.io/badge/Avalonia-0.9.0+-brightgreen)](https://www.nuget.org/packages/EventBinder.Avalonia)
 ## Getting started
 
-Just install the nuget package. If it does not work and you get XamlParseException, then apply `[assembly: EventBinder.AssemblyReference]` attribute in your AssemblyInfo.cs.
+Just install the nuget package. In case of `XamlParseException`, try to apply `[assembly: EventBinder.AssemblyReference]` attribute in your AssemblyInfo.cs or somewhere at global space (e.g. Program.cs).
 
 ## Features
 - Binding to methods without ICommand
@@ -47,6 +47,7 @@ public class ViewModel
 ```
 #### XAML-side binding
 ```xaml
+<!-- Please note that the assembly for Avalonia is different. It is assembly=EventBinder.Avalonia. -->
 <Window xmlns:e="clr-namespace:EventBinder;assembly=EventBinder" Name="Wnd">
     <Rectangle Fill="LightGray" Name="Rct"
         MouseLeftButtonDown="{e:EventBinding ShowMessage, `Happy `, 20m, 20.0 }"
