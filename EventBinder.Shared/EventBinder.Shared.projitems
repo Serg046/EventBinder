@@ -9,6 +9,7 @@
     <Import_RootNamespace>EventBinder.Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AssemblyReferenceAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DependencyPropertyCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Emitter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)EventBinding.cs" />
