@@ -16,7 +16,7 @@
       <Version>2.4.5</Version>
     </PackageReference>
     <PackageReference Include="BenchmarkDotNet">
-      <Version>0.13.3</Version>
+      <Version>0.13.5</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
