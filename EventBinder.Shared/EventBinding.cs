@@ -113,10 +113,13 @@ namespace EventBinder
             };
             frameworkElement.AttachedToVisualTree += (sender, e) =>
             {
-	            lock (sync)
-	            {
-                    eventInfo.AddEventHandler(frameworkElement, handler);
-			        binded = true;
+                lock (sync)
+                {
+                    if (!binded)
+                    {
+                        eventInfo.AddEventHandler(frameworkElement, handler);
+                        binded = true;
+                    }
                 }
             };
 #else
