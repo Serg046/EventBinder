@@ -103,47 +103,34 @@ namespace EventBinder
 		        }
 	        };
 #if AVALONIA
-            frameworkElement.DetachedFromVisualTree += (sender, e) =>
-            {
-	            lock (sync)
-	            {
-                    eventInfo.RemoveEventHandler(frameworkElement, handler);
-                    binded = false;
-	            }
-            };
-            frameworkElement.AttachedToVisualTree += (sender, e) =>
-            {
-                lock (sync)
-                {
-                    if (!binded)
-                    {
-                        eventInfo.AddEventHandler(frameworkElement, handler);
-                        binded = true;
-                    }
-                }
-            };
+            frameworkElement.DetachedFromVisualTree += (sender, e) => RemoveEventHandler(frameworkElement, eventInfo, handler, sync, ref binded);
+            frameworkElement.AttachedToVisualTree += (sender, e) => AddEventHandler(frameworkElement, eventInfo, handler, sync, ref binded);
 #else
-            frameworkElement.Unloaded += (sender, e) =>
-            {
-	            lock (sync)
-	            {
-                    eventInfo.RemoveEventHandler(frameworkElement, handler);
-			        binded = false;
-                }
-            };
-            frameworkElement.Loaded += (sender, e) =>
-            {
-	            lock (sync)
-	            {
-		            if (!binded)
-		            {
-			            eventInfo.AddEventHandler(frameworkElement, handler);
-			            binded = true;
-		            }
-	            }
-            };
+            frameworkElement.Unloaded += (sender, e) => RemoveEventHandler(frameworkElement, eventInfo, handler, sync, ref binded);
+            frameworkElement.Loaded += (sender, e) => AddEventHandler(frameworkElement, eventInfo, handler, sync, ref binded);
 #endif
             return handler;
+        }
+
+        private static void RemoveEventHandler(XamlControl frameworkElement, EventInfo eventInfo, Delegate handler, object sync, ref bool binded)
+        {
+            lock (sync)
+            {
+                eventInfo.RemoveEventHandler(frameworkElement, handler);
+                binded = false;
+            }
+        }
+
+        private static void AddEventHandler(XamlControl frameworkElement, EventInfo eventInfo, Delegate handler, object sync, ref bool binded)
+        {
+            lock (sync)
+            {
+                if (!binded)
+                {
+                    eventInfo.AddEventHandler(frameworkElement, handler);
+                    binded = true;
+                }
+            }
         }
 
         private Delegate GenerateHandler(XamlControl frameworkElement, EventInfo eventInfo)
