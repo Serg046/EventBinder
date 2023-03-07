@@ -115,8 +115,11 @@ namespace EventBinder
             {
 	            lock (sync)
 	            {
-                    eventInfo.AddEventHandler(frameworkElement, handler);
-			        binded = true;
+                    if (!binded)
+                    {
+                        eventInfo.AddEventHandler(frameworkElement, handler);
+                        binded = true;
+                    }
                 }
             };
 #else
