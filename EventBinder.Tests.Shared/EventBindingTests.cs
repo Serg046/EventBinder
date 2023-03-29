@@ -262,7 +262,8 @@ namespace EventBinder.Tests
         public void EventBinding_DataContextIsSetBeforeEvaluation_Success()
         {
 	        var stackPanel = XamlReader.Parse<StackPanel>("<StackPanel ><StackPanel.DataContext><local:XamlViewModel/></StackPanel.DataContext><StackPanel.Children><Button Click=\"{e:EventBinding Invoke}\"/></StackPanel.Children></StackPanel>");
-	        var button = stackPanel.Children[0] as Button;
+            var button = stackPanel.Children[0] as Button;
+            button.RaiseLoadedEvent();
 	        var dataContext = button.DataContext as XamlViewModel;
 
             Assert.False(dataContext.Executed);

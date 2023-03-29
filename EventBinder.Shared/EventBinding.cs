@@ -50,7 +50,9 @@ namespace EventBinder
                             ?? TryDetermineEventInfo(serviceProvider, frameworkElement)
                             ?? throw new InvalidOperationException("Only events are supported");
 #endif       
-            return Bind(frameworkElement, eventInfo);
+            Bind(frameworkElement, eventInfo);
+            // No need to unsubscribe (the scope is not longer than the owner's scope)
+            return _eventHandlerGenerator.GenerateEmptyHandler(eventInfo.EventHandlerType);
         }
 
         private EventInfo TryDetermineEventInfo(IServiceProvider serviceProvider, XamlControl frameworkElement)
@@ -76,8 +78,9 @@ namespace EventBinder
         {
 	        var eventInfo = frameworkElement.GetType().GetEvent(eventName) ?? throw new MissingFieldException($"Cannot find \"{eventName}\" event");
 	        var binding = new EventBinding(methodPath, arguments);
-	        var handler = binding.Bind(frameworkElement, eventInfo);
-		    eventInfo.AddEventHandler(frameworkElement, handler);
+            var handler = binding.Bind(frameworkElement, eventInfo);
+            // Adding explicitly because FrameworkElement is already loaded (Loaded event doesn't happen)
+            eventInfo.AddEventHandler(frameworkElement, handler);
         }
 
         private Delegate Bind(XamlControl frameworkElement, EventInfo eventInfo)
@@ -123,12 +126,15 @@ namespace EventBinder
 
         private static void AddEventHandler(XamlControl frameworkElement, EventInfo eventInfo, Delegate handler, object sync, ref bool binded)
         {
-            lock (sync)
+            if (!binded)
             {
-                if (!binded)
+                lock (sync)
                 {
-                    eventInfo.AddEventHandler(frameworkElement, handler);
-                    binded = true;
+                    if (!binded)
+                    {
+                        eventInfo.AddEventHandler(frameworkElement, handler);
+                        binded = true;
+                    }
                 }
             }
         }

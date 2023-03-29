@@ -13,6 +13,9 @@ namespace EventBinder.Tests.Avalonia
         public static void RaiseClickEvent(this Button button)
             => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, button));
 
+        public static void RaiseLoadedEvent(this Button button)
+            => button.RaiseAttachedToVisualTreeEvent();
+
         public static void RaiseDetachedFromVisualTreeEvent(this IVisual element)
         {
 	        var visualTreeAttachmentEventArgs = new VisualTreeAttachmentEventArgs(element, Mock.Of<IRenderRoot>());

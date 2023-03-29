@@ -7,5 +7,8 @@ namespace EventBinder.Tests
     {
         public static void RaiseClickEvent(this ButtonBase button)
             => button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent, button));
+
+        public static void RaiseLoadedEvent(this ButtonBase button)
+            => button.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent, button));
     }
 }
