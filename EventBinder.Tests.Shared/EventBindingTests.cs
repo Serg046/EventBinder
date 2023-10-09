@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Xunit;
 #if AVALONIA
-	using Avalonia.Controls;
+using Avalonia.Controls;
 	using EventBinder.Tests.Avalonia;
 	using Avalonia.Interactivity;
 #else
@@ -411,6 +411,30 @@ namespace EventBinder.Tests
 
 	        await Task.Delay(500);
 	        Assert.True(executed);
+        }
+
+        [WpfFact]
+        public void EventBinding_TwoHandlers_Executed()
+        {
+            var stackPanel = XamlReader.Parse<StackPanel>("<StackPanel GotFocus=\"{e:EventBinding Invoke, $0}\"><Button GotFocus=\"{e:EventBinding Invoke, $0}\" /></StackPanel>");
+            var button = (Button)stackPanel.Children[0];
+            stackPanel.DataContext = new Action<object>(sender =>
+            {
+                if (sender is StackPanel sp)
+                {
+                    sp.Tag = "sp_set";
+                }
+                else if (sender is Button btn)
+                {
+                    btn.Tag = "btn_set";
+                }
+            });
+
+            stackPanel.RaiseEvent(new RoutedEventArgs(StackPanel.GotFocusEvent, stackPanel));
+            button.RaiseEvent(new RoutedEventArgs(Button.GotFocusEvent, button));
+
+            Assert.Equal("sp_set", stackPanel.Tag);
+            Assert.Equal("btn_set", button.Tag);
         }
 
 #if !AVALONIA

@@ -142,7 +142,7 @@ namespace EventBinder
         private Delegate GenerateHandler(XamlControl frameworkElement, EventInfo eventInfo)
         {
 	        return frameworkElement.DataContext != null
-		        ? _eventHandlerGenerator.GenerateHandler(eventInfo.EventHandlerType, this, frameworkElement)
+		        ? _eventHandlerGenerator.GenerateHandler(eventInfo, this, frameworkElement)
 		        : _eventHandlerGenerator.GenerateEmptyHandler(eventInfo.EventHandlerType);
         }
 

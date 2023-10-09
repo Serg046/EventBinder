@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
 #if AVALONIA
 	using XamlControl = Avalonia.Visual;
 #else
@@ -16,7 +15,7 @@ namespace EventBinder
     {
         private readonly ModuleBuilder _module;
 		private readonly Dictionary<Type, Delegate> _emptyHandlerCache = new Dictionary<Type, Delegate>();
-		private readonly Dictionary<string, Type> _handlerCache = new Dictionary<string, Type>();
+		private readonly Dictionary<XamlControl, Dictionary<EventInfo, Type>> _handlerCache = new Dictionary<XamlControl, Dictionary<EventInfo, Type>>();
 
         public EventHandlerGenerator(ModuleBuilder module) => _module = module;
 
@@ -32,34 +31,28 @@ namespace EventBinder
             return handler;
         }
 
-        public Delegate GenerateHandler(Type eventHandler, EventBinding binding, XamlControl source)
+        public Delegate GenerateHandler(EventInfo eventInfo, EventBinding binding, XamlControl source)
         {
-            var parameterTypes = GetParameterTypes(eventHandler);
+            var parameterTypes = GetParameterTypes(eventInfo.EventHandlerType);
             var arguments = ResolveArguments(binding.Arguments);
-            var key = GetKey(eventHandler, source.DataContext, binding.MethodPath, arguments);
 
-			if (!_handlerCache.TryGetValue(key, out var handlerType))
+            if (!_handlerCache.TryGetValue(source, out var cache))
             {
-	            var type = _module.DefineType(Guid.NewGuid().ToString(), TypeAttributes.Public);
-				var emitter = new Emitter(type, binding, source);
-				emitter.GenerateHandler(arguments, parameterTypes);
-	            handlerType = type.CreateType();
-				_handlerCache.Add(key, handlerType);
-			}
+                cache = new Dictionary<EventInfo, Type>();
+				_handlerCache.Add(source, cache);
+            }
 
-			var instance = Activator.CreateInstance(handlerType, new object[] { source, arguments });
-            return Delegate.CreateDelegate(eventHandler, instance, Emitter.HANDLER_METHOD_NAME);
-        }
+            if (!cache.TryGetValue(eventInfo, out var handlerType))
+            {
+                var type = _module.DefineType(Guid.NewGuid().ToString(), TypeAttributes.Public);
+                var emitter = new Emitter(type, binding, source);
+                emitter.GenerateHandler(arguments, parameterTypes);
+                handlerType = type.CreateType();
+                cache.Add(eventInfo, handlerType);
+            }
 
-        private string GetKey(Type eventHandler, object dataContext, string methodPath, object[] arguments)
-        {
-	        var sb = new StringBuilder(eventHandler.FullName + methodPath);
-		    sb.Append(dataContext.GetType().FullName);
-	        foreach (var argument in arguments)
-	        {
-		        sb.Append(argument.GetType().FullName);
-	        }
-	        return sb.ToString();
+            var instance = Activator.CreateInstance(handlerType, new object[] { source, arguments });
+            return Delegate.CreateDelegate(eventInfo.EventHandlerType, instance, Emitter.HANDLER_METHOD_NAME);
         }
 
         private static Type[] GetParameterTypes(Type eventHandler)
