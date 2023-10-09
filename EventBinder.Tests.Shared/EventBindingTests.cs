@@ -3,13 +3,14 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Xunit;
 #if AVALONIA
+using Avalonia.Input;
 using Avalonia.Controls;
-	using EventBinder.Tests.Avalonia;
-	using Avalonia.Interactivity;
+using EventBinder.Tests.Avalonia;
+using Avalonia.Interactivity;
 #else
 using System.Windows.Interop;
-	using System.Windows;
-	using System.Windows.Controls;
+using System.Windows;
+using System.Windows.Controls;
 #endif
 
 namespace EventBinder.Tests
@@ -430,8 +431,21 @@ namespace EventBinder.Tests
                 }
             });
 
+#if AVALONIA
+            stackPanel.RaiseEvent(new GotFocusEventArgs
+            {
+                RoutedEvent = InputElement.GotFocusEvent,
+                NavigationMethod = NavigationMethod.Tab
+            });
+            button.RaiseEvent(new GotFocusEventArgs
+            {
+                RoutedEvent = InputElement.GotFocusEvent,
+                NavigationMethod = NavigationMethod.Tab
+            });
+#else
             stackPanel.RaiseEvent(new RoutedEventArgs(StackPanel.GotFocusEvent, stackPanel));
             button.RaiseEvent(new RoutedEventArgs(Button.GotFocusEvent, button));
+#endif
 
             Assert.Equal("sp_set", stackPanel.Tag);
             Assert.Equal("btn_set", button.Tag);
