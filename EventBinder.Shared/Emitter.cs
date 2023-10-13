@@ -52,10 +52,21 @@ namespace EventBinder
 			var resolvedArguments = EmitArguments(arguments, parameterTypes);
 			var innerMethod = GetMethod(body, _source.DataContext, _eventBinding.MethodPath, resolvedArguments.Types);
 			if (innerMethod == null) ThrowMissingMethodException(_eventBinding.MethodPath, resolvedArguments.Types);
-			foreach (var opCode in resolvedArguments.OpCodes)
+            
+			var innerMethodParameters = innerMethod.GetParameters();
+            for (var i = 0; i < resolvedArguments.OpCodes.Length; i++)
 			{
-				opCode(body);
-			}
+				foreach (var opCode in resolvedArguments.OpCodes[i])
+				{
+                    opCode(body);
+                }
+
+                if (resolvedArguments.Types[i].IsValueType && !innerMethodParameters[i].ParameterType.IsValueType)
+				{
+					body.Emit(OpCodes.Box, resolvedArguments.Types[i]);
+				}
+            }
+
 			if (_eventBinding.Debounce.HasValue)
 			{
 				GenerateDebouncedHandler(resolvedArguments, innerMethod, body);
@@ -198,24 +209,26 @@ namespace EventBinder
 		private ResolvedArguments EmitArguments(object[] arguments, Type[] parameterTypes)
 		{
 			var argumentTypes = new Type[arguments.Length];
-			var opCodes = new List<Action<ILGenerator>>();
+			var opCodes = new IEnumerable<Action<ILGenerator>>[arguments.Length];
 			for (var i = 0; i < arguments.Length; i++)
 			{
+				var argOpCodes = new List<Action<ILGenerator>>();
 				var argument = arguments[i];
 				Type argumentType;
 				if (argument is EventArg eventArg)
 				{
-					argumentType = HandleEventArg(parameterTypes, opCodes, eventArg);
+					argumentType = HandleEventArg(parameterTypes, argOpCodes, eventArg);
 				}
 				else
 				{
-					argumentType = HandleArg(opCodes, i, argument);
+					argumentType = HandleArg(argOpCodes, i, argument);
 				}
 				if (argument is XamlBinding binding)
 				{
-					argumentType = HandleBindingArg(binding, opCodes, i);
+					argumentType = HandleBindingArg(binding, argOpCodes, i);
 				}
 				argumentTypes[i] = argumentType;
+				opCodes[i] = argOpCodes;
 			}
 			return new ResolvedArguments(argumentTypes, opCodes);
 		}
@@ -373,14 +386,14 @@ namespace EventBinder
 
 		private class ResolvedArguments
 		{
-			public ResolvedArguments(Type[] types, IEnumerable<Action<ILGenerator>> opCodes)
+			public ResolvedArguments(Type[] types, IEnumerable<Action<ILGenerator>>[] opCodes)
 			{
 				Types = types;
 				OpCodes = opCodes;
 			}
 
 			public Type[] Types { get; }
-			public IEnumerable<Action<ILGenerator>> OpCodes { get; }
+			public IEnumerable<Action<ILGenerator>>[] OpCodes { get; }
 		}
 
 		private class DebouncerModel

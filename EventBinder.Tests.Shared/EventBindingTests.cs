@@ -451,6 +451,19 @@ namespace EventBinder.Tests
             Assert.Equal("btn_set", button.Tag);
         }
 
+        [WpfFact]
+        public void EventBinding_Conversion_Executed()
+        {
+            const double expected = 200;
+            double num = -1;
+            var button = XamlReader.Parse<Button>($"<Button Height=\"{expected}\" Name=\"Btn\" Click=\"{{e:EventBinding Invoke, {{Binding ElementName=Btn, Path=Height}}}}\"/>");
+            button.DataContext = new Action<object>(n => num = (double)n);
+
+            button.RaiseClickEvent();
+
+            Assert.Equal(expected, num);
+        }
+
 #if !AVALONIA
         [WpfFact]
         public void EventBinding_KeyDown_Executed()
